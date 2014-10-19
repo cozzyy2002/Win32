@@ -13,13 +13,13 @@ using namespace std;
  * callback interface.
  * calledback class or event listner class should implement this interface.
  */
-class ICallbacks {
+class ICallback {
 public:
 	virtual void name() =0;
 	virtual void age(int n) = 0;
 	virtual void location(const char* state, const char* city) = 0;
 };
-class X : public ICallbacks {
+class X : public ICallback {
 public:
 	void x() {};
 	virtual void name() { cout << "class X" << endl; };
@@ -59,13 +59,14 @@ public:
 		listener = NULL;
 		method = NULL;
 	};
-	F getMethod() const { return (listener && method) ? method : NULL; };
 	const char* name() const { return _name.c_str(); };
 
+protected:
 	I* listener;
 	F method;
 	string _name;
 
+public:
 	bool canApply() const {
 		bool ret = (listener && method);
 		cout << (ret ? "calling " : "can't call ") << typeid(method).name() << " of " << _name << endl;
@@ -82,14 +83,15 @@ public:
 };
 
 template<class I, typename F>
-class CallbackList : public vector<Callback<I, F>> {
-	typedef vector<Callback<I, F>> callbacks_t;
+class EventList : public vector<Callback<I, F>> {
+	typedef vector<Callback<I, F>> event_t;
 public:
 	bool addListener(I* listener, F method) {
 		iterator i = find(listener, method);
 		bool ok = (i == end());
 		if(ok) {
 			Callback<I, F> callback;
+			cout << "adding listner: " << typeid(*listener).name() << endl;
 			callback.bind(listener, method);
 			push_back(callback);
 		} else {
@@ -101,6 +103,7 @@ public:
 		iterator i = find(listener);
 		bool ok = (i != end());
 		if(ok) {
+			cout << "removing listner: " << i->name() << endl;
 			erase(i);
 		} else {
 			cout << "ERROR: not listening: " << typeid(*listener).name() << endl;
@@ -119,10 +122,10 @@ public:
 };
 
 template<class I, typename P1>
-class Arg1CallbackList : public CallbackList<I, void (I::*)(P1)> {
+class Arg1EventList : public EventList<I, void (I::*)(P1)> {
 public:
-	void forEach(P1 n) {
-		for(const_iterator i = begin(); i < end(); i++) (*i)(n);
+	void forEach(P1 p1) {
+		for(const_iterator callback = begin(); callback < end(); callback++) (*callback)(p1);
 	};
 };
 
@@ -166,36 +169,36 @@ int _tmain(int argc, _TCHAR* argv[])
 	Y y;
 
 	cout << "---- vector<Callback<I, F>> addListener ----" << endl;
-	Arg1CallbackList<ICallbacks, int> callbacks;
-	callbacks.addListener(&x, &ICallbacks::age);
-	callbacks.addListener(&x, &ICallbacks::age);
-	callbacks.addListener(&y, &ICallbacks::age);
-	// equivalent to for(size_t i = 0; i < callbacks.size(); i++) callbacks[i](-20);
-	callbacks.forEach(-20);
+	Arg1EventList<ICallback, int> event;
+	event.addListener(&x, &ICallback::age);
+	event.addListener(&x, &ICallback::age);
+	event.addListener(&y, &ICallback::age);
+	// equivalent to for(size_t i = 0; i < event.size(); i++) event[i](-20);
+	event.forEach(-20);
 	cout << "---- vector<Callback<I, F>> removeListener ----" << endl;
-	callbacks.removeListener(&x);
-	callbacks.removeListener(&x);
-	// equivalent to for(size_t i = 0; i < callbacks.size(); i++) callbacks[i](123);
-	callbacks.forEach(123);
+	event.removeListener(&x);
+	event.removeListener(&x);
+	// equivalent to for(size_t i = 0; i < event.size(); i++) event[i](123);
+	event.forEach(123);
 
 	cout << "---- Callback<I, F> ----" << endl;
-	Callback<ICallbacks, void (ICallbacks::*)(int)> callback;
-	callback.bind(&x, &ICallbacks::age, "void ICallback::age(int)");
+	Callback<ICallback, void (ICallback::*)(int)> callback;
+	callback.bind(&x, &ICallback::age, "void ICallback::age(int)");
 	callback(20);
 	callback.unbind();
 	callback(120);
 
-	Callback<ICallbacks, void (ICallbacks::*)(const char*, const char*)> locationCallback;
-	locationCallback.bind(&x, &ICallbacks::location, "LocationCallback(state, city)");
+	Callback<ICallback, void (ICallback::*)(const char*, const char*)> locationCallback;
+	locationCallback.bind(&x, &ICallback::location, "LocationCallback(state, city)");
 	locationCallback("tokyo", "shibuya");
 	locationCallback.unbind();
 	locationCallback("", NULL);
 
-	void (ICallbacks::*pName)() = &ICallbacks::name;
+	void (ICallback::*pName)() = &ICallback::name;
 	(x.*pName)();
 	(y.*pName)();
 
-	ICallbacks* c = &x;
+	ICallback* c = &x;
 
 	c->name();
 	c = &y;
