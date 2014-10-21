@@ -138,31 +138,24 @@ string BoolFunc(int value) { return b ? "true" : "false"; };
 template<typename ValueType, typename RetType = ValueType>
 class CalcFuncs {
 public:
-	enum Calc {
-		CalcFix,
-		CalcMul,
-		CalcAdd,
-	};
+	typedef RetType (CalcFuncs::*Func)(ValueType) const;
+	CalcFuncs(Func func, ValueType value) : func(func), value(value) {};
 
-	CalcFuncs(Calc type, ValueType value) : type(type), value(value) {};
-	RetType operator()(ValueType arg) const {
-		switch(type) {
-		case CalcFix: return (RetType)(value);
-		case CalcMul: return (RetType)(value * arg);
-		case CalcAdd: return (RetType)(value + arg);
-		}
-		return (RetType)-1;	// ERROR
-	};
+	RetType operator()(ValueType arg) const { return (this->*func)(arg); };
+
+	RetType Fix(ValueType)     const { return (RetType)(value); };
+	RetType Mul(ValueType arg) const { return (RetType)(value * arg); };
+	RetType Add(ValueType arg) const { return (RetType)(value + arg); };
 
 private:
-	Calc type;
+	Func func;
 	ValueType value;
 };
 
 #define CALC_FUNCS CalcFuncs<double>
-#define FIX_VALUE(v) CALC_FUNCS(CALC_FUNCS::CalcFix, v)
-#define MUL_VALUE(v) CALC_FUNCS(CALC_FUNCS::CalcMul, v)
-#define ADD_VALUE(v) CALC_FUNCS(CALC_FUNCS::CalcAdd, v)
+#define FIX_VALUE(v) CALC_FUNCS(&CALC_FUNCS::Fix, v)
+#define MUL_VALUE(v) CALC_FUNCS(&CALC_FUNCS::Mul, v)
+#define ADD_VALUE(v) CALC_FUNCS(&CALC_FUNCS::Add, v)
 
 class MyException : public exception {
 public:
