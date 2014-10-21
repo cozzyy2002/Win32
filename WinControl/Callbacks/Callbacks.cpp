@@ -135,28 +135,34 @@ string CharFunc(int value) { char s[2] = { c, '\0' }; return s; };
 template<bool b>
 string BoolFunc(int value) { return b ? "true" : "false"; };
 
+template<typename ValueType, typename RetType = ValueType>
 class CalcFuncs {
 public:
-	enum Type {
-		FixType,
-		MulType,
-		AddType,
+	enum Calc {
+		CalcFix,
+		CalcMul,
+		CalcAdd,
 	};
 
-	CalcFuncs(Type type, double value) : type(type), value(value) {};
-	double operator()(double arg) const {
+	CalcFuncs(Calc type, ValueType value) : type(type), value(value) {};
+	RetType operator()(ValueType arg) const {
 		switch(type) {
-		case FixType: return value;
-		case MulType: return value * arg;
-		case AddType: return value + arg;
+		case CalcFix: return (RetType)value;
+		case CalcMul: return (RetType)value * arg;
+		case CalcAdd: return (RetType)value + arg;
 		}
-		return -1;	// ERROR
+		return (RetType)-1;	// ERROR
 	};
 
 private:
-	Type type;
-	double value;
+	Calc type;
+	ValueType value;
 };
+
+#define CALC_FUNCS CalcFuncs<double>
+#define FIX_VALUE(v) CALC_FUNCS(CALC_FUNCS::CalcFix, v)
+#define MUL_VALUE(v) CALC_FUNCS(CALC_FUNCS::CalcMul, v)
+#define ADD_VALUE(v) CALC_FUNCS(CALC_FUNCS::CalcAdd, v)
 
 class MyException : public exception {
 public:
@@ -186,10 +192,10 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 	cout << "---- function table ----" << endl;
-	static const CalcFuncs calcFuncs[] = {
-		CalcFuncs(CalcFuncs::FixType, 1.23),
-		CalcFuncs(CalcFuncs::MulType, 0.3),
-		CalcFuncs(CalcFuncs::AddType, 10),
+	static const CALC_FUNCS calcFuncs[] = {
+		FIX_VALUE(1.23),
+		MUL_VALUE(0.3), MUL_VALUE(0.7),
+		ADD_VALUE(-10),
 	};
 	for(int i = 0; i < sizeof(calcFuncs)/sizeof(calcFuncs[0]); i++) {
 		cout << "calcFuncs[" << i << "]=" << calcFuncs[i](100) << endl;
