@@ -147,9 +147,9 @@ public:
 	CalcFuncs(Calc type, ValueType value) : type(type), value(value) {};
 	RetType operator()(ValueType arg) const {
 		switch(type) {
-		case CalcFix: return (RetType)value;
-		case CalcMul: return (RetType)value * arg;
-		case CalcAdd: return (RetType)value + arg;
+		case CalcFix: return (RetType)(value);
+		case CalcMul: return (RetType)(value * arg);
+		case CalcAdd: return (RetType)(value + arg);
 		}
 		return (RetType)-1;	// ERROR
 	};
@@ -194,8 +194,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	cout << "---- function table ----" << endl;
 	static const CALC_FUNCS calcFuncs[] = {
 		FIX_VALUE(1.23),
-		MUL_VALUE(0.3), MUL_VALUE(0.7),
-		ADD_VALUE(-10),
+		MUL_VALUE(0.321), MUL_VALUE(0.765),
+		ADD_VALUE(-10.555),
 	};
 	for(int i = 0; i < sizeof(calcFuncs)/sizeof(calcFuncs[0]); i++) {
 		cout << "calcFuncs[" << i << "]=" << calcFuncs[i](100) << endl;
