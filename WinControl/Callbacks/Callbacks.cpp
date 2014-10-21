@@ -1,4 +1,4 @@
-ï»¿// Callbacks.cpp : ã‚³ãƒ³ã‚½ãƒ¼ãƒ« ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®ã‚¨ãƒ³ãƒˆãƒª ãƒã‚¤ãƒ³ãƒˆã‚’å®šç¾©ã—ã¾ã™ã€‚
+// Callbacks.cpp : ƒRƒ“ƒ\[ƒ‹ ƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚ÌƒGƒ“ƒgƒŠ ƒ|ƒCƒ“ƒg‚ğ’è‹`‚µ‚Ü‚·B
 //
 
 #include "stdafx.h"
@@ -13,13 +13,13 @@ using namespace std;
  * callback interface.
  * calledback class or event listner class should implement this interface.
  */
-class ICallback {
+class ICallbacks {
 public:
 	virtual void name() =0;
 	virtual void age(int n) = 0;
 	virtual void location(const char* state, const char* city) = 0;
 };
-class X : public ICallback {
+class X : public ICallbacks {
 public:
 	void x() {};
 	virtual void name() { cout << "class X" << endl; };
@@ -59,14 +59,13 @@ public:
 		listener = NULL;
 		method = NULL;
 	};
+	F getMethod() const { return (listener && method) ? method : NULL; };
 	const char* name() const { return _name.c_str(); };
 
-protected:
 	I* listener;
 	F method;
 	string _name;
 
-public:
 	bool canApply() const {
 		bool ret = (listener && method);
 		cout << (ret ? "calling " : "can't call ") << typeid(method).name() << " of " << _name << endl;
@@ -83,15 +82,14 @@ public:
 };
 
 template<class I, typename F>
-class EventList : public vector<Callback<I, F>> {
-	typedef vector<Callback<I, F>> event_t;
+class CallbackList : public vector<Callback<I, F>> {
+	typedef vector<Callback<I, F>> callbacks_t;
 public:
 	bool addListener(I* listener, F method) {
 		iterator i = find(listener, method);
 		bool ok = (i == end());
 		if(ok) {
 			Callback<I, F> callback;
-			cout << "adding listner: " << typeid(*listener).name() << endl;
 			callback.bind(listener, method);
 			push_back(callback);
 		} else {
@@ -103,7 +101,6 @@ public:
 		iterator i = find(listener);
 		bool ok = (i != end());
 		if(ok) {
-			cout << "removing listner: " << i->name() << endl;
 			erase(i);
 		} else {
 			cout << "ERROR: not listening: " << typeid(*listener).name() << endl;
@@ -122,10 +119,10 @@ public:
 };
 
 template<class I, typename P1>
-class Arg1EventList : public EventList<I, void (I::*)(P1)> {
+class Arg1CallbackList : public CallbackList<I, void (I::*)(P1)> {
 public:
-	void forEach(P1 p1) {
-		for(const_iterator callback = begin(); callback < end(); callback++) (*callback)(p1);
+	void forEach(P1 n) {
+		for(const_iterator i = begin(); i < end(); i++) (*i)(n);
 	};
 };
 
@@ -137,6 +134,29 @@ string CharFunc(int value) { char s[2] = { c, '\0' }; return s; };
 
 template<bool b>
 string BoolFunc(int value) { return b ? "true" : "false"; };
+
+class CalcFuncs {
+public:
+	enum Type {
+		FixType,
+		MulType,
+		AddType,
+	};
+
+	CalcFuncs(Type type, double value) : type(type), value(value) {};
+	double operator()(double arg) const {
+		switch(type) {
+		case FixType: return value;
+		case MulType: return value * arg;
+		case AddType: return value + arg;
+		}
+		return -1;	// ERROR
+	};
+
+private:
+	Type type;
+	double value;
+};
 
 class MyException : public exception {
 public:
@@ -155,7 +175,7 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	cout << "---- function table ----" << endl;
 	typedef string (*Calc)(int value);
-	Calc calcs[] = {
+	static const Calc calcs[] = {
 		to_string, BoolFunc<true>,
 		CharFunc<'0'>, CharFunc<'4'>,
 		IntFunc<10>, IntFunc<-20>,
@@ -165,40 +185,50 @@ int _tmain(int argc, _TCHAR* argv[])
 		cout << "calcs[" << i << "]=" << (*calcs[i])(100) << endl;
 	}
 
+	cout << "---- function table ----" << endl;
+	static const CalcFuncs calcFuncs[] = {
+		CalcFuncs(CalcFuncs::FixType, 1.23),
+		CalcFuncs(CalcFuncs::MulType, 0.3),
+		CalcFuncs(CalcFuncs::AddType, 10),
+	};
+	for(int i = 0; i < sizeof(calcFuncs)/sizeof(calcFuncs[0]); i++) {
+		cout << "calcFuncs[" << i << "]=" << calcFuncs[i](100) << endl;
+	}
+
 	X x;
 	Y y;
 
 	cout << "---- vector<Callback<I, F>> addListener ----" << endl;
-	Arg1EventList<ICallback, int> event;
-	event.addListener(&x, &ICallback::age);
-	event.addListener(&x, &ICallback::age);
-	event.addListener(&y, &ICallback::age);
-	// equivalent to for(size_t i = 0; i < event.size(); i++) event[i](-20);
-	event.forEach(-20);
+	Arg1CallbackList<ICallbacks, int> callbacks;
+	callbacks.addListener(&x, &ICallbacks::age);
+	callbacks.addListener(&x, &ICallbacks::age);
+	callbacks.addListener(&y, &ICallbacks::age);
+	// equivalent to for(size_t i = 0; i < callbacks.size(); i++) callbacks[i](-20);
+	callbacks.forEach(-20);
 	cout << "---- vector<Callback<I, F>> removeListener ----" << endl;
-	event.removeListener(&x);
-	event.removeListener(&x);
-	// equivalent to for(size_t i = 0; i < event.size(); i++) event[i](123);
-	event.forEach(123);
+	callbacks.removeListener(&x);
+	callbacks.removeListener(&x);
+	// equivalent to for(size_t i = 0; i < callbacks.size(); i++) callbacks[i](123);
+	callbacks.forEach(123);
 
 	cout << "---- Callback<I, F> ----" << endl;
-	Callback<ICallback, void (ICallback::*)(int)> callback;
-	callback.bind(&x, &ICallback::age, "void ICallback::age(int)");
+	Callback<ICallbacks, void (ICallbacks::*)(int)> callback;
+	callback.bind(&x, &ICallbacks::age, "void ICallback::age(int)");
 	callback(20);
 	callback.unbind();
 	callback(120);
 
-	Callback<ICallback, void (ICallback::*)(const char*, const char*)> locationCallback;
-	locationCallback.bind(&x, &ICallback::location, "LocationCallback(state, city)");
+	Callback<ICallbacks, void (ICallbacks::*)(const char*, const char*)> locationCallback;
+	locationCallback.bind(&x, &ICallbacks::location, "LocationCallback(state, city)");
 	locationCallback("tokyo", "shibuya");
 	locationCallback.unbind();
 	locationCallback("", NULL);
 
-	void (ICallback::*pName)() = &ICallback::name;
+	void (ICallbacks::*pName)() = &ICallbacks::name;
 	(x.*pName)();
 	(y.*pName)();
 
-	ICallback* c = &x;
+	ICallbacks* c = &x;
 
 	c->name();
 	c = &y;
