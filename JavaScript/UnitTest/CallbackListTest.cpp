@@ -3,6 +3,11 @@
 
 #include <helpers/CallbackList.h>
 
+#include <log4cplus/logger.h>
+#include <log4cplus/loggingmacros.h>
+
+static log4cplus::Logger logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("Test.CallbackListTest"));
+
 class Listener {
 public:
 	Listener() : calledMethod(NULL), calledCount(0) {};

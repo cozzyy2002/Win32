@@ -27,12 +27,18 @@
     <ClInclude Include="string.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="helpers\Dispatcher.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="string.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="helpers\Dispatcher.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

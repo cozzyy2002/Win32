@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JavaScript", "JavaScript\JavaScript.vcxproj", "{C8B44BA1-E3CB-4D7D-A3F8-A50F900E9282}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnitTest", "UnitTest\UnitTest.vcxproj", "{1E6F7D59-C398-4FF4-B5D0-788BBC057357}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C8B44BA1-E3CB-4D7D-A3F8-A50F900E9282} = {C8B44BA1-E3CB-4D7D-A3F8-A50F900E9282}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

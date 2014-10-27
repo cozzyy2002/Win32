@@ -5,6 +5,8 @@
 #include <vector>
 #include <exception>
 
+#include <log4cplus/loggingmacros.h>
+
 /**
  * template class to call callback method or event listner method.
  *
@@ -39,7 +41,7 @@ public:
 
 	bool canApply(bool throwError = false) const {
 		bool ret = (listener && method);
-		std::cout << (ret ? "calling " : "can't call ") << name() << std::endl;
+		LOG4CPLUS_INFO(logger, (ret ? "calling " : "can't call ") << name());
 		if(!ret && throwError) throw std::exception("unbound");
 		return ret;
 	};
