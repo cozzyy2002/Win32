@@ -41,7 +41,7 @@
     <ClCompile Include="CallbackListTest.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="DispatcherTest.cpp">
+    <ClCompile Include="WindowtimerTest.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

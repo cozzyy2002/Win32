@@ -30,7 +30,7 @@ public:
 
 TEST_F(CallbackTest, method_with_no_param) {
 
-	P0Callback<Callee> callback;
+	Callback<Callee, void (Callee::*)()>::P0<> callback;
 
 	ASSERT_FALSE(callback) << "before bind";
 	callback.bind(&testCallback, &Callee::methodP0);
@@ -46,7 +46,7 @@ TEST_F(CallbackTest, method_with_no_param) {
 
 TEST_F(CallbackTest, method_with_1_param) {
 
-	P1Callback<Callee, int, int> callback;
+	Callback<Callee, int (Callee::*)(int)>::P1<int, int> callback;
 
 	ASSERT_FALSE(callback) << "before bind";
 	callback.bind(&testCallback, &Callee::methodP1);

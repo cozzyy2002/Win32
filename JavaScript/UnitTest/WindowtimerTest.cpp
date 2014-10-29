@@ -6,7 +6,7 @@
 #include <log4cplus/logger.h>
 #include <log4cplus/loggingmacros.h>
 
-static log4cplus::Logger logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("Test.DispatcherTest"));
+static log4cplus::Logger logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("Test.setTimeoutTest"));
 
 class Timeout {
 public:
@@ -28,15 +28,15 @@ public:
 	int calledCount;
 };
 
-class DispatcherTest : public ::testing::Test {
+class setTimeoutTest : public ::testing::Test {
 public:
 	Timeout testTimeout;
 };
 
-TEST_F(DispatcherTest, method_with_no_param) {
+TEST_F(setTimeoutTest, method_with_no_param) {
 
 	DWORD start = ::GetTickCount();
-	HANDLE timerId = setTimeout(&testTimeout, &Timeout::methodP0, 1000);
+	TimerId timerId = setTimeout(&testTimeout, &Timeout::methodP0, 1000);
 
 	ASSERT_TRUE(Dispatcher::join(timerId)) << "join()";
 	ASSERT_NEAR(1000, testTimeout.tickCount - start, 50) << "tick count";

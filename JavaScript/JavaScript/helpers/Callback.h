@@ -51,6 +51,27 @@ public:
 	};
 	bool operator==(const Callback& other) const { return has(other.listener, other.method); };
 	operator bool() const { return (listener && method); };
+
+	template<typename R = void>
+	class P0 : public Callback {
+	public:
+		P0(I* listener = NULL, F method = NULL) : Callback(listener, method) {};
+		R operator()() const {
+			canApply(true) ;
+			return (listener->*method)();
+		};
+	};
+
+	template<typename P1, typename R = void>
+	class P1 : public Callback {
+	public:
+		typedef R (I::*F1)(P1);
+		P1(I* listener = NULL, F1 method = NULL) : Callback<I, F1>(listener, method) {};
+		R operator()(P1 p1) const {
+			canApply(true) ;
+			return (listener->*method)(p1);
+		};
+	};
 };
 
 template<class I, typename R = void>
