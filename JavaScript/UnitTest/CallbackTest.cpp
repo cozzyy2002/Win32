@@ -63,19 +63,3 @@ TEST_F(CallbackTest, method_with_1_param) {
 }
 
 #include <helpers/Dispatcher.h>
-
-class X {
-public:
-	void methodP1(const std::string&) {}; 
-};
-
-void test() {
-	Callee callee;
-	HANDLE h = dispatch(&callee, &Callee::methodP0);
-	Dispatcher::cancel(h);
-	Dispatcher::join(h);
-
-	X x;
-	const std::string s("test");
-	dispatch(&x, &X::methodP1, s, 1000);
-}

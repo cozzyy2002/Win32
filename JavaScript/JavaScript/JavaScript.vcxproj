@@ -96,6 +96,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="string.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="WindowTimer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="helpers\Dispatcher.cpp">

@@ -19,14 +19,17 @@ HANDLE Dispatcher::dispatch(DWORD delay, bool interval)
 
 bool Dispatcher::cancel(HANDLE cancelEvent)
 {
-	BOOL ret = ::SetEvent(cancelEvent);
-	return ret == TRUE;
+	bool ret = ::SetEvent(cancelEvent) ? true : false;
+	if(!ret) LOG4CPLUS_ERROR(logger, "SetEvent() failed. error=" << ::GetLastError());
+	return ret;
 }
 
 bool Dispatcher::join(HANDLE cancelEvent, DWORD limit)
 {
 	DWORD wait = ::WaitForSingleObject(cancelEvent, limit);
-	return wait == WAIT_OBJECT_0;
+	bool ret = (wait == WAIT_OBJECT_0);
+	if(!ret) LOG4CPLUS_TRACE(logger, "WaitForSingleObject() returned " << wait << ",error=" << ::GetLastError());
+	return ret;
 }
 
 void Dispatcher::threadFunc(void* pVoid)
@@ -35,6 +38,7 @@ void Dispatcher::threadFunc(void* pVoid)
 	try {
 		pThis->threadFunc();
 	} catch(...) {
+		LOG4CPLUS_ERROR(logger, "worker thread failed.");
 	}
 	delete pThis;
 }
@@ -43,19 +47,28 @@ void Dispatcher::threadFunc()
 {
 	do {
 		DWORD wait = WAIT_TIMEOUT;
-		if(this->delay) wait = ::WaitForSingleObject(this->cancelEvent, this->delay);
-		if(wait == WAIT_TIMEOUT) {
+		if(this->delay) {
+			LOG4CPLUS_TRACE(logger, "waiting " << this->delay << "mSec,timer ID=" << this->cancelEvent);
+			wait = ::WaitForSingleObject(this->cancelEvent, this->delay);
+		}
+		switch(wait) {
+		case WAIT_TIMEOUT:
 			try {
-				LOG4CPLUS_INFO(logger, "calling timer ID=" << this->cancelEvent);
+				LOG4CPLUS_TRACE(logger, "calling timer ID=" << this->cancelEvent);
 				this->call();
-			} catch(std::exception&) {
+			} catch(std::exception& e) {
 				// Callback throws exception if 
+				LOG4CPLUS_ERROR(logger, "timout method threw: " << e.what());
 			}
-			// resume join()
-			::SetEvent(this->cancelEvent);
-		} else {
-			// canceled
+			break;
+		case WAIT_OBJECT_0:
+			LOG4CPLUS_TRACE(logger, "canceled timer ID=" << this->cancelEvent);
+			break;
+		default:
+			LOG4CPLUS_ERROR(logger, "wait faild: wait=" << wait << ",error=" << ::GetLastError());
 			break;
 		}
 	} while(this->interval);
+	// resume join()
+	::SetEvent(this->cancelEvent);
 }

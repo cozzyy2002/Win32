@@ -41,7 +41,7 @@ public:
 
 	bool canApply(bool throwError = false) const {
 		bool ret = (listener && method);
-		LOG4CPLUS_INFO(logger, (ret ? "calling " : "can't call ") << name());
+		LOG4CPLUS_TRACE(logger, (ret ? "calling " : "can't call ") << name());
 		if(!ret && throwError) throw std::exception("unbound");
 		return ret;
 	};
