@@ -61,5 +61,3 @@ TEST_F(CallbackTest, method_with_1_param) {
 	ASSERT_FALSE(callback) << "after unbind";
 	ASSERT_THROW(callback(param), std::exception) << "unbound";
 }
-
-#include <helpers/Dispatcher.h>
