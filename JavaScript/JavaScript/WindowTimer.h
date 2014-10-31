@@ -69,7 +69,7 @@ TimerId setTimeout(I* listener, void (I::*method)(), DWORD delay = 0)
 }
 
 template<class I, typename P1>
-TimerId dispatch(I* listener, void (I::*method)(const P1&), P1 p1, DWORD delay = 0)
+TimerId setTimeout(I* listener, void (I::*method)(const P1&), P1 p1, DWORD delay = 0)
 {
 	P1Dispatcher<I, P1>* disp = new P1Dispatcher<I, P1>(listener, method, p1);
 	return disp->dispatch(delay, false);

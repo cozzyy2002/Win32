@@ -8,7 +8,7 @@
 #include <log4cplus/logger.h>
 #include <log4cplus/loggingmacros.h>
 
-static log4cplus::Logger logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("Dispatcher"));
+static log4cplus::Logger logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("Test.main"));
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -20,4 +20,3 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	return RUN_ALL_TESTS();
 }
-
