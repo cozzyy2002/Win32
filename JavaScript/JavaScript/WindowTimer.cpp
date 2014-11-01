@@ -42,7 +42,7 @@ bool Dispatcher::stop(TimerId timerId)
 	timerId = sync.get();
 	bool ret = timerId != NULL;
 	if(ret) {
-		if(timeKillEvent(timerId->timer) == TIMERR_NOERROR) {
+		if(timeKillEvent(timerId->timer) != TIMERR_NOERROR) {
 			LOG4CPLUS_WARN(logger, "timeKillEvent() failed. error=" << ::GetLastError());
 		}
 		delete timerId->pThis;
