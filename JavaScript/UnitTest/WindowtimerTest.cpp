@@ -21,8 +21,8 @@ public:
 	void methodP0() {
 		saveCalledContext("methodP0");
 	};
-	void methodP1(const P1& i) {
-		p1 = i;
+	void methodP1(const P1& p) {
+		p1 = p;
 		saveCalledContext("methodP1");
 	};
 
@@ -40,14 +40,20 @@ public:
 
 class WindowTimerTest : public ::testing::Test {
 public:
+	void SetUp() {
+		start = ::GetTickCount();
+	};
+
 	Timeout testTimeout;
+
+	DWORD start;
 };
 
-TEST_F(WindowTimerTest, set_join_P0) {
+TEST_F(WindowTimerTest, set_P0) {
 
-	DWORD start = ::GetTickCount();
-	HANDLE timerId = setTimeout(&testTimeout, &Timeout::methodP0, 1000);
+	TimerId timerId = setTimeout(&testTimeout, &Timeout::methodP0, 1000);
 
+	//::Sleep(1100);
 	ASSERT_TRUE(joinTimeout(timerId)) << "join()";
 	ASSERT_NEAR(1000, testTimeout.tickCount - start, 50) << "tick count";
 
@@ -55,32 +61,23 @@ TEST_F(WindowTimerTest, set_join_P0) {
 	EXPECT_EQ(1, testTimeout.calledCount) << "called count";
 }
 
-TEST_F(WindowTimerTest, set_join_limit_P0) {
+TEST_F(WindowTimerTest, set_clear_P0) {
 
-	DWORD start = ::GetTickCount();
-	HANDLE timerId = setTimeout(&testTimeout, &Timeout::methodP0, 1000);
+	TimerId timerId = setTimeout(&testTimeout, &Timeout::methodP0, 1000);
 
 	ASSERT_FALSE(joinTimeout(timerId, 800)) << "join()";
 
-	clearTimeout(timerId);
-}
-
-TEST_F(WindowTimerTest, set_clear_P0) {
-
-	DWORD start = ::GetTickCount();
-	HANDLE timerId = setTimeout(&testTimeout, &Timeout::methodP0, 1000);
-
 	ASSERT_TRUE(clearTimeout(timerId)) << "clear";
-	ASSERT_TRUE(joinTimeout(timerId)) << "join()";
-
+	//::Sleep(1100);
+	EXPECT_EQ(NULL, testTimeout.calledMethod) << "called method";
 	EXPECT_EQ(0, testTimeout.calledCount) << "called count";
 }
 
-TEST_F(WindowTimerTest, set_join_P1) {
+TEST_F(WindowTimerTest, set_P1) {
 
-	DWORD start = ::GetTickCount();
-	HANDLE timerId = setTimeout(&testTimeout, &Timeout::methodP1, p1, 1000);
+	TimerId timerId = setTimeout(&testTimeout, &Timeout::methodP1, p1, 1000);
 
+	//::Sleep(1100);
 	ASSERT_TRUE(joinTimeout(timerId)) << "join()";
 	ASSERT_NEAR(1000, testTimeout.tickCount - start, 50) << "tick count";
 
@@ -88,4 +85,15 @@ TEST_F(WindowTimerTest, set_join_P1) {
 	EXPECT_STREQ(p1.s, testTimeout.p1.s) << "string parameter to timeout";
 	EXPECT_STREQ("methodP1", testTimeout.calledMethod) << "called method";
 	EXPECT_EQ(1, testTimeout.calledCount) << "called count";
+}
+
+TEST_F(WindowTimerTest, interval_P0)
+{
+	TimerId timerId = setInterval(&testTimeout, &Timeout::methodP0, 200);
+
+	::Sleep(1100);
+	ASSERT_TRUE(clearInterval(timerId)) << "clear";
+
+	EXPECT_STREQ("methodP0", testTimeout.calledMethod) << "called method";
+	EXPECT_EQ(5, testTimeout.calledCount) << "called count";
 }
