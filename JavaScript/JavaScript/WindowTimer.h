@@ -24,13 +24,11 @@ public:
 	static bool join(TimerId timerId, DWORD limit);
 
 protected:
-	Dispatcher() : timerId(NULL) {};
-	virtual ~Dispatcher() {};
+	Dispatcher();
+	virtual ~Dispatcher();
 
 	static void CALLBACK onTimeout(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
 	virtual void call() = 0;
-
-	static bool deleteTimer(TimerId timerId);
 
 	TimerId timerId;
 	bool interval;

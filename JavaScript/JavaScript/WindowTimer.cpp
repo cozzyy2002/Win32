@@ -6,6 +6,19 @@
 
 static log4cplus::Logger logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("Dispatcher"));
 
+Dispatcher::Dispatcher() : timerId(NULL)
+{
+}
+
+Dispatcher::~Dispatcher()
+{
+	Sync sync(timerId);
+	if(sync.get()) {
+		::SetEvent(timerId->done);
+		sync.destroy();
+	}
+}
+
 TimerId Dispatcher::start(UINT delay, bool interval)
 {
 	this->interval = interval;
@@ -23,18 +36,6 @@ TimerId Dispatcher::start(UINT delay, bool interval)
 	return timerId;
 }
 
-bool Dispatcher::deleteTimer(TimerId timerId)
-{
-	Sync sync(timerId);
-	timerId = sync.get();
-	if(timerId) {
-		::SetEvent(timerId->done);
-		delete timerId->pThis;
-		sync.destroy();
-	}
-	return timerId != NULL;
-}
-
 bool Dispatcher::stop(TimerId timerId)
 {
 	Sync sync(timerId);
@@ -42,20 +43,25 @@ bool Dispatcher::stop(TimerId timerId)
 	bool ret = timerId != NULL;
 	if(ret) {
 		if(timeKillEvent(timerId->timer) == TIMERR_NOERROR) {
-			LOG4CPLUS_ERROR(logger, "timeKillEvent() failed. error=" << ::GetLastError());
+			LOG4CPLUS_WARN(logger, "timeKillEvent() failed. error=" << ::GetLastError());
 		}
-		ret = deleteTimer(timerId);
+		delete timerId->pThis;
 	}
 	return ret;
 }
 
 bool Dispatcher::join(TimerId timerId, DWORD limit)
 {
-	Sync sync(timerId);
-	timerId = sync.get();
-	bool ret = timerId != NULL;
+	HANDLE done = NULL;
+	{
+		// lock while retrieving done event handle
+		Sync sync(timerId);
+		timerId = sync.get();
+		if(timerId) done = timerId->done;
+	}
+	bool ret = done != NULL;
 	if(ret) {
-		ret = WAIT_OBJECT_0 == ::WaitForSingleObject(timerId->done, limit);
+		ret = WAIT_OBJECT_0 == ::WaitForSingleObject(done, limit);
 		if(!ret) {
 			LOG4CPLUS_WARN(logger, "joined by timeout or error. error=" << ::GetLastError());
 		}
@@ -75,10 +81,10 @@ void Dispatcher::onTimeout(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR
 		} catch(...) {
 			LOG4CPLUS_ERROR(logger, "worker thread failed.");
 		}
-		if(!::SetEvent(pThis->timerId->done)) {
+		if(!::SetEvent(timerId->done)) {
 			LOG4CPLUS_ERROR(logger, "SetEvent() failed. error=" << ::GetLastError());
 		}
 		// NOTE: for interval timer, stop() should be called.
-		if(!pThis->interval) deleteTimer(timerId);
+		if(!pThis->interval) delete pThis;
 	}
 }

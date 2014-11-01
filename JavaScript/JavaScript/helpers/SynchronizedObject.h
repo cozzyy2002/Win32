@@ -13,6 +13,7 @@ public:
 	// create T and lock
 	SynchronizedObject() {
 		obj = (Object*)::HeapAlloc(::GetProcessHeap(), 0, sizeof(Object));
+		InitializeCriticalSection(&obj->lock);
 
 		lock();
 	};
@@ -34,6 +35,7 @@ public:
 	// delete T
 	void destroy() {
 		if(valid(obj)) {
+			DeleteCriticalSection(&obj->lock);
 			::HeapFree(::GetProcessHeap(), 0, obj);
 		}
 	};
@@ -42,8 +44,8 @@ protected:
 	bool valid(void* p) const {
 		return p ? (::HeapValidate(::GetProcessHeap(), 0, p) ? true : false) : false;
 	};
-	void lock() {};
-	void unlock() {};
+	void lock() { EnterCriticalSection(&obj->lock); };
+	void unlock() { LeaveCriticalSection(&obj->lock); };
 
 	Object* obj;
 };
