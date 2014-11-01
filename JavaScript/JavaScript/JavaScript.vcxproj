@@ -62,7 +62,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>log4cplusUD.lib</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;log4cplusUD.lib</AdditionalDependencies>
     </Lib>
     <Lib>
       <AdditionalLibraryDirectories>$(LOG4CPLUS_ROOT)\msvc10\Win32\bin.$(Configuration)_Unicode_MTd</AdditionalLibraryDirectories>
@@ -88,7 +88,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalDependencies>log4cplusU.lib</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;log4cplusU.lib</AdditionalDependencies>
     </Lib>
     <Lib>
       <AdditionalLibraryDirectories>$(LOG4CPLUS_ROOT)\msvc10\Win32\bin.$(Configuration)_Unicode_MT</AdditionalLibraryDirectories>
