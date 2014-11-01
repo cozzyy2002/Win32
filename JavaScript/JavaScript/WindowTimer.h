@@ -5,25 +5,36 @@
 
 #include "helpers/Callback.h"
 
-typedef UINT TimerId;
-
 class Dispatcher {
+protected:
+	typedef struct _Timer {
+		UINT timer;			// identifier returned by timeSetEvent()
+		HANDLE done;		// event handle used to stop() and join()
+	} Timer;
+
 public:
+	typedef Timer* TimerId;
+
 	TimerId start(UINT delay, bool interval);
-	static bool stop(TimerId id);
-	//static bool join(TimerId id, DWORD limit);
+	static bool stop(TimerId timerId);
+	static bool join(TimerId timerId, DWORD limit);
 
 protected:
-	Dispatcher() : joinEvent(NULL) {};
-	virtual ~Dispatcher() {
-		if(joinEvent) ::CloseHandle(joinEvent);
-	};
+	Dispatcher() : timerId(NULL) {};
+	virtual ~Dispatcher() { deleteTimer(timerId); };
 
 	static void CALLBACK onTimeout(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
 	virtual void call() = 0;
 
-	HANDLE joinEvent;
+	static bool validateTimer(TimerId timerId);
+	static bool deleteTimer(TimerId timerId);
+
+	TimerId timerId;
+	HANDLE hHeap;
+	bool interval;
 };
+
+typedef Dispatcher::TimerId TimerId;
 
 template<class I>
 class P0Dispatcher : public Dispatcher {
@@ -81,5 +92,5 @@ TimerId setTimeout(I* listener, void (I::*method)(const P1&), P1 p1, DWORD delay
 
 inline bool clearTimeout(TimerId id) { return Dispatcher::stop(id); }
 inline bool clearInterval(TimerId id) { return Dispatcher::stop(id); }
-//inline bool joinTimeout(TimerId id, DWORD limit = INFINITE) {return Dispatcher::join(id, limit); }
-//inline bool joinInterval(TimerId id, DWORD limit = INFINITE) {return Dispatcher::join(id, limit); }
+inline bool joinTimeout(TimerId id, DWORD limit = INFINITE) {return Dispatcher::join(id, limit); }
+inline bool joinInterval(TimerId id, DWORD limit = INFINITE) {return Dispatcher::join(id, limit); }
