@@ -1,85 +1,39 @@
 #include "stdafx.h"
 #include "WindowTimer.h"
 
-#include <process.h>
-
 #include <log4cplus/logger.h>
 #include <log4cplus/loggingmacros.h>
 
 static log4cplus::Logger logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("Dispatcher"));
 
-HANDLE Dispatcher::dispatch(DWORD delay, bool interval)
+TimerId Dispatcher::start(UINT delay, bool interval)
 {
-	this->delay = delay;
-	this->interval = interval;
-	this->cancelEvent = ::CreateEvent(NULL, TRUE, FALSE, NULL);
-
-	_beginthread(threadFunc, 0, this);
-	return this->cancelEvent;
+	TimerId timerId = timeSetEvent(delay, 100, onTimeout, (DWORD_PTR)this, interval ? TIME_PERIODIC : TIME_ONESHOT);
+	if(timerId) {
+		joinEvent = ::CreateEvent(NULL, TRUE, FALSE, NULL);
+	} else {
+		LOG4CPLUS_ERROR(logger, "timeSetEvent() failed. error=" << ::GetLastError());
+	}
+	return timerId;
 }
 
-bool Dispatcher::cancel(HANDLE cancelEvent)
+bool Dispatcher::stop(TimerId id)
 {
-	bool ret = ::SetEvent(cancelEvent) ? true : false;
-	if(!ret) LOG4CPLUS_ERROR(logger, "SetEvent() failed. error=" << ::GetLastError());
+	bool ret = timeKillEvent(id) == TIMERR_NOERROR;
+	if(!ret) LOG4CPLUS_ERROR(logger, "timeKillEvent() failed. error=" << ::GetLastError());
 	return ret;
 }
 
-bool Dispatcher::join(HANDLE cancelEvent, DWORD limit)
+void Dispatcher::onTimeout(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
 {
-	DWORD wait = ::WaitForSingleObject(cancelEvent, limit);
-	bool ret = (wait == WAIT_OBJECT_0);
-	if(!ret) LOG4CPLUS_TRACE(logger, "WaitForSingleObject() returned " << wait << ",error=" << ::GetLastError());
-	return ret;
-}
-
-void Dispatcher::threadFunc(void* pVoid)
-{
-	Dispatcher* pThis = static_cast<Dispatcher*>(pVoid);
+	Dispatcher* pThis = static_cast<Dispatcher*>((void*)dwUser);
 	try {
-		pThis->threadFunc();
+		pThis->call();
 	} catch(...) {
 		LOG4CPLUS_ERROR(logger, "worker thread failed.");
 	}
+	if(!::SetEvent(pThis->joinEvent)) {
+		LOG4CPLUS_ERROR(logger, "SetEvent() failed. error=" << ::GetLastError());
+	}
 	delete pThis;
-}
-
-void Dispatcher::threadFunc()
-{
-	do {
-		DWORD wait = WAIT_TIMEOUT;
-		if(this->delay) {
-			LOG4CPLUS_TRACE(logger, "waiting " << this->delay << "mSec,timer ID=" << this->cancelEvent);
-			wait = ::WaitForSingleObject(this->cancelEvent, this->delay);
-		}
-		switch(wait) {
-		case WAIT_TIMEOUT:
-			try {
-				LOG4CPLUS_TRACE(logger, "calling timer ID=" << this->cancelEvent);
-				this->call();
-			} catch(std::exception& e) {
-				// Callback throws exception if 
-				LOG4CPLUS_ERROR(logger, "timout method threw: " << e.what());
-			}
-			break;
-		case WAIT_OBJECT_0:
-			LOG4CPLUS_TRACE(logger, "canceled timer ID=" << this->cancelEvent);
-			break;
-		default:
-			LOG4CPLUS_ERROR(logger, "wait faild: wait=" << wait << ",error=" << ::GetLastError());
-			break;
-		}
-	} while(this->interval);
-	// resume join()
-	::SetEvent(this->cancelEvent);
-}
-
-bool clearTimeout(TimerId id)
-{
-	return Dispatcher::cancel(id);
-}
-
-bool joinTimeout(TimerId id, DWORD limit)
-{
-	return Dispatcher::join(id, limit);
 }

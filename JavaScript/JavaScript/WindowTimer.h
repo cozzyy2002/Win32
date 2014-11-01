@@ -1,29 +1,28 @@
 #pragma once
 
-#include <Windows.h>
+#include <windows.h>
+#include <mmsystem.h>
 
 #include "helpers/Callback.h"
 
+typedef UINT TimerId;
+
 class Dispatcher {
 public:
-	HANDLE dispatch(DWORD delay = 0, bool interval = false);
-	static bool cancel(HANDLE cancelEvent);
-	static bool join(HANDLE cancelEvent, DWORD limit = INFINITE);
+	TimerId start(UINT delay, bool interval);
+	static bool stop(TimerId id);
+	//static bool join(TimerId id, DWORD limit);
 
 protected:
-	Dispatcher() : cancelEvent(NULL) {};
+	Dispatcher() : joinEvent(NULL) {};
 	virtual ~Dispatcher() {
-		if(cancelEvent) ::CloseHandle(cancelEvent);
+		if(joinEvent) ::CloseHandle(joinEvent);
 	};
 
-	void threadFunc();
-	static void threadFunc(void* pVoid);
-
+	static void CALLBACK onTimeout(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
 	virtual void call() = 0;
 
-	HANDLE cancelEvent;
-	DWORD delay;
-	bool interval;
+	HANDLE joinEvent;
 };
 
 template<class I>
@@ -59,21 +58,28 @@ protected:
 	const P1 p1;
 };
 
-typedef HANDLE TimerId;
-
 template<class I>
 TimerId setTimeout(I* listener, void (I::*method)(), DWORD delay = 0)
 {
 	P0Dispatcher<I>* disp = new P0Dispatcher<I>(listener, method);
-	return disp->dispatch(delay, false);
+	return disp->start(delay, false);
+}
+
+template<class I>
+TimerId setInterval(I* listener, void (I::*method)(), DWORD delay = 0)
+{
+	P0Dispatcher<I>* disp = new P0Dispatcher<I>(listener, method);
+	return disp->start(delay, true);
 }
 
 template<class I, typename P1>
 TimerId setTimeout(I* listener, void (I::*method)(const P1&), P1 p1, DWORD delay = 0)
 {
 	P1Dispatcher<I, P1>* disp = new P1Dispatcher<I, P1>(listener, method, p1);
-	return disp->dispatch(delay, false);
+	return disp->start(delay, false);
 }
 
-extern bool clearTimeout(TimerId id);
-extern bool joinTimeout(TimerId id, DWORD limit = INFINITE);
+inline bool clearTimeout(TimerId id) { return Dispatcher::stop(id); }
+inline bool clearInterval(TimerId id) { return Dispatcher::stop(id); }
+//inline bool joinTimeout(TimerId id, DWORD limit = INFINITE) {return Dispatcher::join(id, limit); }
+//inline bool joinInterval(TimerId id, DWORD limit = INFINITE) {return Dispatcher::join(id, limit); }
