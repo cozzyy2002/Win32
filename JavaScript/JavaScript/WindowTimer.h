@@ -4,16 +4,20 @@
 #include <mmsystem.h>
 
 #include "helpers/Callback.h"
+#include "helpers/SynchronizedObject.h"
 
 class Dispatcher {
 protected:
+	// allocated by SynchronizedObject
 	typedef struct _Timer {
+		Dispatcher* pThis;
 		UINT timer;			// identifier returned by timeSetEvent()
 		HANDLE done;		// event handle used to stop() and join()
 	} Timer;
 
 public:
 	typedef Timer* TimerId;
+	typedef SynchronizedObject<Timer> Sync;
 
 	TimerId start(UINT delay, bool interval);
 	static bool stop(TimerId timerId);
@@ -21,16 +25,14 @@ public:
 
 protected:
 	Dispatcher() : timerId(NULL) {};
-	virtual ~Dispatcher() { deleteTimer(timerId); };
+	virtual ~Dispatcher() {};
 
 	static void CALLBACK onTimeout(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
 	virtual void call() = 0;
 
-	static bool validateTimer(TimerId timerId);
 	static bool deleteTimer(TimerId timerId);
 
 	TimerId timerId;
-	HANDLE hHeap;
 	bool interval;
 };
 

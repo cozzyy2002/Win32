@@ -10,10 +10,11 @@ TimerId Dispatcher::start(UINT delay, bool interval)
 {
 	this->interval = interval;
 
-	hHeap = ::GetProcessHeap();
-	timerId = (TimerId)::HeapAlloc(hHeap, 0, sizeof(Timer));
+	Sync sync;
+	timerId = sync.get();
 
-	timerId->timer = timeSetEvent(delay, 100, onTimeout, (DWORD_PTR)this, interval ? TIME_PERIODIC : TIME_ONESHOT);
+	timerId->pThis = this;
+	timerId->timer = timeSetEvent(delay, 100, onTimeout, (DWORD_PTR)timerId, interval ? TIME_PERIODIC : TIME_ONESHOT);
 	if(timerId->timer) {
 		timerId->done = ::CreateEvent(NULL, TRUE, FALSE, NULL);
 	} else {
@@ -22,30 +23,23 @@ TimerId Dispatcher::start(UINT delay, bool interval)
 	return timerId;
 }
 
-bool Dispatcher::validateTimer(TimerId timerId)
-{
-	bool ret = ::HeapValidate(::GetProcessHeap(), 0, timerId) ? true : false;
-	if(!ret) {
-		LOG4CPLUS_WARN(logger, "timer may have stopped.");
-	}
-	return ret;
-}
-
 bool Dispatcher::deleteTimer(TimerId timerId)
 {
-	bool ret = validateTimer(timerId);
-	if(ret) {
+	Sync sync(timerId);
+	timerId = sync.get();
+	if(timerId) {
 		::SetEvent(timerId->done);
-		if(!::HeapFree(::GetProcessHeap(), 0, timerId)) {
-			LOG4CPLUS_WARN(logger, "HeapFree() failed. error=" << ::GetLastError());
-		}
+		delete timerId->pThis;
+		sync.destroy();
 	}
-	return ret;
+	return timerId != NULL;
 }
 
 bool Dispatcher::stop(TimerId timerId)
 {
-	bool ret = validateTimer(timerId);
+	Sync sync(timerId);
+	timerId = sync.get();
+	bool ret = timerId != NULL;
 	if(ret) {
 		if(timeKillEvent(timerId->timer) == TIMERR_NOERROR) {
 			LOG4CPLUS_ERROR(logger, "timeKillEvent() failed. error=" << ::GetLastError());
@@ -57,7 +51,9 @@ bool Dispatcher::stop(TimerId timerId)
 
 bool Dispatcher::join(TimerId timerId, DWORD limit)
 {
-	bool ret = validateTimer(timerId);
+	Sync sync(timerId);
+	timerId = sync.get();
+	bool ret = timerId != NULL;
 	if(ret) {
 		ret = WAIT_OBJECT_0 == ::WaitForSingleObject(timerId->done, limit);
 		if(!ret) {
@@ -69,17 +65,20 @@ bool Dispatcher::join(TimerId timerId, DWORD limit)
 
 void Dispatcher::onTimeout(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
 {
-	Dispatcher* pThis = static_cast<Dispatcher*>((void*)dwUser);
-	try {
-		pThis->call();
-	} catch(...) {
-		LOG4CPLUS_ERROR(logger, "worker thread failed.");
-	}
-	if(validateTimer(pThis->timerId)) {
+
+	Sync sync((void*)dwUser);
+	TimerId timerId = sync.get();
+	if(timerId) {
+		Dispatcher* pThis = timerId->pThis;
+		try {
+			pThis->call();
+		} catch(...) {
+			LOG4CPLUS_ERROR(logger, "worker thread failed.");
+		}
 		if(!::SetEvent(pThis->timerId->done)) {
 			LOG4CPLUS_ERROR(logger, "SetEvent() failed. error=" << ::GetLastError());
 		}
+		// NOTE: for interval timer, stop() should be called.
+		if(!pThis->interval) deleteTimer(timerId);
 	}
-	// NOTE: for interval timer, stop() should be called.
-	if(!pThis->interval) delete pThis;
 }
