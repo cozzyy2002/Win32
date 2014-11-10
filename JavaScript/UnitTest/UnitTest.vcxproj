@@ -54,7 +54,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(LOG4CPLUS_ROOT)\include;$(SolutionDir)JavaScript;$(GTEST_ROOT)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(GECKO_PLUGIN_SDK)\include;$(LOG4CPLUS_ROOT)\include;$(SolutionDir)JavaScript;$(GTEST_ROOT)\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -73,7 +73,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(LOG4CPLUS_ROOT)\include;$(SolutionDir)JavaScript;$(GTEST_ROOT)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(GECKO_PLUGIN_SDK)\include;$(LOG4CPLUS_ROOT)\include;$(SolutionDir)JavaScript;$(GTEST_ROOT)\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -98,6 +98,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="CallbackTest.cpp" />
+    <ClCompile Include="picovariantTest.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
