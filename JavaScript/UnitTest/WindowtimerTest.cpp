@@ -44,6 +44,8 @@ public:
 		start = ::GetTickCount();
 	};
 
+	DWORD elapsedTime() { return ::GetTickCount() - this->start; };
+
 	Timeout testTimeout;
 
 	DWORD start;
@@ -53,10 +55,10 @@ TEST_F(WindowTimerTest, set_P0) {
 
 	TimerId timerId = setTimeout(&testTimeout, &Timeout::methodP0, 1000);
 
-	//::Sleep(1100);
 	ASSERT_TRUE(joinTimeout(timerId)) << "join()";
-	ASSERT_NEAR(1000, testTimeout.tickCount - start, 50) << "tick count";
+	EXPECT_NEAR(1000, elapsedTime(), 50) << "elapsed time";
 
+	::Sleep(1000);
 	EXPECT_STREQ("methodP0", testTimeout.calledMethod) << "called method";
 	EXPECT_EQ(1, testTimeout.calledCount) << "called count";
 }
@@ -68,7 +70,8 @@ TEST_F(WindowTimerTest, set_clear_P0) {
 	ASSERT_FALSE(joinTimeout(timerId, 800)) << "join()";
 
 	ASSERT_TRUE(clearTimeout(timerId)) << "clear";
-	//::Sleep(1100);
+
+	::Sleep(1000);
 	EXPECT_EQ(NULL, testTimeout.calledMethod) << "called method";
 	EXPECT_EQ(0, testTimeout.calledCount) << "called count";
 }
@@ -77,12 +80,12 @@ TEST_F(WindowTimerTest, set_P1) {
 
 	TimerId timerId = setTimeout(&testTimeout, &Timeout::methodP1, p1, 1000);
 
-	//::Sleep(1100);
 	ASSERT_TRUE(joinTimeout(timerId)) << "join()";
-	ASSERT_NEAR(1000, testTimeout.tickCount - start, 50) << "tick count";
+	EXPECT_NEAR(1000, elapsedTime(), 50) << "elapsed time";
 
-	EXPECT_EQ(p1.x, testTimeout.p1.x) << "int parameter to timeout";
-	EXPECT_STREQ(p1.s, testTimeout.p1.s) << "string parameter to timeout";
+	::Sleep(1000);
+	EXPECT_EQ(p1.x, testTimeout.p1.x) << "int parameter passed to timeout";
+	EXPECT_STREQ(p1.s, testTimeout.p1.s) << "string parameter passed to timeout";
 	EXPECT_STREQ("methodP1", testTimeout.calledMethod) << "called method";
 	EXPECT_EQ(1, testTimeout.calledCount) << "called count";
 }
@@ -94,6 +97,35 @@ TEST_F(WindowTimerTest, interval_P0)
 	::Sleep(1100);
 	ASSERT_TRUE(clearInterval(timerId)) << "clear";
 
+	::Sleep(1000);
 	EXPECT_STREQ("methodP0", testTimeout.calledMethod) << "called method";
 	EXPECT_EQ(5, testTimeout.calledCount) << "called count";
+}
+
+class ClearIntervalTimeout : public Timeout {
+public:
+	ClearIntervalTimeout() {};
+
+	void methodP0() {
+		Timeout::methodP0();
+		if(calledCount == repeat) clearInterval(timerId);
+	};
+
+	TimerId timerId;
+	int repeat;
+};
+
+TEST_F(WindowTimerTest, interval_clear_P0)
+{
+	ClearIntervalTimeout timeout;
+	TimerId timerId = setInterval(&timeout, &ClearIntervalTimeout::methodP0, 200);
+	timeout.timerId = timerId;
+	timeout.repeat = 5;
+
+	ASSERT_TRUE(joinInterval(timerId)) << "join()";
+	EXPECT_NEAR(1000, elapsedTime(), 50) << "elapsed time";
+
+	::Sleep(1000);
+	EXPECT_STREQ("methodP0", timeout.calledMethod) << "called method";
+	EXPECT_EQ(5, timeout.calledCount) << "called count";
 }

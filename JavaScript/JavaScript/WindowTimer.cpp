@@ -14,7 +14,11 @@ Dispatcher::~Dispatcher()
 {
 	Sync sync(timerId);
 	if(sync.get()) {
-		::SetEvent(timerId->done);
+		if(timerId->done) {
+			if(!::SetEvent(timerId->done)) {
+				LOG4CPLUS_ERROR(logger, "SetEvent() failed. error=" << ::GetLastError());
+			}
+		}
 		sync.destroy();
 	}
 }
@@ -80,9 +84,6 @@ void Dispatcher::onTimeout(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR
 			pThis->call();
 		} catch(...) {
 			LOG4CPLUS_ERROR(logger, "worker thread failed.");
-		}
-		if(!::SetEvent(timerId->done)) {
-			LOG4CPLUS_ERROR(logger, "SetEvent() failed. error=" << ::GetLastError());
 		}
 		// NOTE: for interval timer, stop() should be called.
 		if(!pThis->interval) delete pThis;
