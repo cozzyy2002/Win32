@@ -14,10 +14,8 @@ Dispatcher::~Dispatcher()
 {
 	Sync sync(timerId);
 	if(sync.get()) {
-		if(timerId->done) {
-			if(!::SetEvent(timerId->done)) {
-				LOG4CPLUS_ERROR(logger, "SetEvent() failed. error=" << ::GetLastError());
-			}
+		if(!::SetEvent(timerId->done)) {
+			LOG4CPLUS_ERROR(logger, "SetEvent() failed. error=" << ::GetLastError());
 		}
 		sync.destroy();
 	}

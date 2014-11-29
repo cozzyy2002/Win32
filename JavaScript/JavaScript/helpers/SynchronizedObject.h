@@ -13,6 +13,8 @@ public:
 	// create T and lock
 	SynchronizedObject() {
 		obj = (Object*)::HeapAlloc(::GetProcessHeap(), 0, sizeof(Object));
+		T content;		// invoke constructor of type T
+		obj->content = content;
 		InitializeCriticalSection(&obj->lock);
 
 		lock();

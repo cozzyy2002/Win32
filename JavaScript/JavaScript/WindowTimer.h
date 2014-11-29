@@ -13,6 +13,8 @@ protected:
 		Dispatcher* pThis;
 		UINT timer;			// identifier returned by timeSetEvent()
 		HANDLE done;		// event handle used to stop() and join()
+
+		_Timer() : pThis(NULL), timer(0), done(NULL) {};
 	} Timer;
 
 public:

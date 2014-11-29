@@ -157,3 +157,83 @@ TEST_F(picovariantTest, String_null) {
 	EXPECT_FALSE(v.isEmptyString()) << "value::isEmptyString()";
 	EXPECT_FALSE(v.isNullObject()) << "value::isNullObject()";
 }
+
+TEST_F(picovariantTest, Number_Int32) {
+	picovariant::value v(1);
+
+	EXPECT_STREQ("Int32", v.getTypeName()) << "value::getTypeName()";
+	EXPECT_FALSE(v.is<void>()) << "value::is<void>()";
+	EXPECT_FALSE(v.is<picovariant::null>()) << "value::is<null>()";
+	EXPECT_FALSE(v.is<bool>()) << "value::is<bool>()";
+	EXPECT_TRUE(v.is<int>()) << "value::is<int>()";
+	EXPECT_TRUE(v.is<double>()) << "value::is<double>()";
+	EXPECT_FALSE(v.is<std::string>()) << "value::is<string>()";
+	EXPECT_FALSE(v.is<NPObject*>()) << "value::is<NPObject*>()";
+
+	EXPECT_TRUE(v.isNumber()) << "value::isNumber()";
+	EXPECT_FALSE(v.isNullString()) << "value::isNullString()";
+	EXPECT_FALSE(v.isEmptyString()) << "value::isEmptyString()";
+	EXPECT_FALSE(v.isNullObject()) << "value::isNullObject()";
+
+	EXPECT_EQ(1, v.get<int>()) << "get()";
+}
+
+TEST_F(picovariantTest, Number_Int32_Exact) {
+	picovariant::value v(1, true);
+
+	EXPECT_STREQ("Int32", v.getTypeName()) << "value::getTypeName()";
+	EXPECT_FALSE(v.is<void>()) << "value::is<void>()";
+	EXPECT_FALSE(v.is<picovariant::null>()) << "value::is<null>()";
+	EXPECT_FALSE(v.is<bool>()) << "value::is<bool>()";
+	EXPECT_TRUE(v.is<int>()) << "value::is<int>()";
+	EXPECT_FALSE(v.is<double>()) << "value::is<double>()";
+	EXPECT_FALSE(v.is<std::string>()) << "value::is<string>()";
+	EXPECT_FALSE(v.is<NPObject*>()) << "value::is<NPObject*>()";
+
+	EXPECT_TRUE(v.isNumber()) << "value::isNumber()";
+	EXPECT_FALSE(v.isNullString()) << "value::isNullString()";
+	EXPECT_FALSE(v.isEmptyString()) << "value::isEmptyString()";
+	EXPECT_FALSE(v.isNullObject()) << "value::isNullObject()";
+
+	EXPECT_EQ(1, v.get<int>()) << "get()";
+}
+
+TEST_F(picovariantTest, Number_Double) {
+	picovariant::value v(1.0);
+
+	EXPECT_STREQ("Double", v.getTypeName()) << "value::getTypeName()";
+	EXPECT_FALSE(v.is<void>()) << "value::is<void>()";
+	EXPECT_FALSE(v.is<picovariant::null>()) << "value::is<null>()";
+	EXPECT_FALSE(v.is<bool>()) << "value::is<bool>()";
+	EXPECT_TRUE(v.is<int>()) << "value::is<int>()";
+	EXPECT_TRUE(v.is<double>()) << "value::is<double>()";
+	EXPECT_FALSE(v.is<std::string>()) << "value::is<string>()";
+	EXPECT_FALSE(v.is<NPObject*>()) << "value::is<NPObject*>()";
+
+	EXPECT_TRUE(v.isNumber()) << "value::isNumber()";
+	EXPECT_FALSE(v.isNullString()) << "value::isNullString()";
+	EXPECT_FALSE(v.isEmptyString()) << "value::isEmptyString()";
+	EXPECT_FALSE(v.isNullObject()) << "value::isNullObject()";
+
+	EXPECT_EQ(1, v.get<double>()) << "get()";
+}
+
+TEST_F(picovariantTest, Number_Double_Exact) {
+	picovariant::value v(1.0, true);
+
+	EXPECT_STREQ("Double", v.getTypeName()) << "value::getTypeName()";
+	EXPECT_FALSE(v.is<void>()) << "value::is<void>()";
+	EXPECT_FALSE(v.is<picovariant::null>()) << "value::is<null>()";
+	EXPECT_FALSE(v.is<bool>()) << "value::is<bool>()";
+	EXPECT_FALSE(v.is<int>()) << "value::is<int>()";
+	EXPECT_TRUE(v.is<double>()) << "value::is<double>()";
+	EXPECT_FALSE(v.is<std::string>()) << "value::is<string>()";
+	EXPECT_FALSE(v.is<NPObject*>()) << "value::is<NPObject*>()";
+
+	EXPECT_TRUE(v.isNumber()) << "value::isNumber()";
+	EXPECT_FALSE(v.isNullString()) << "value::isNullString()";
+	EXPECT_FALSE(v.isEmptyString()) << "value::isEmptyString()";
+	EXPECT_FALSE(v.isNullObject()) << "value::isNullObject()";
+
+	EXPECT_EQ(1, v.get<double>()) << "get()";
+}
