@@ -3,7 +3,6 @@
 
 #include "stdafx.h"
 #include "WinGTest.h"
-#include "WinControl.h"
 
 #define MAX_LOADSTRING 100
 
@@ -131,8 +130,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		HANDLE_MSG(hwnd, WM_CREATE, WinGtest::onCreate);
 		HANDLE_MSG(hwnd, WM_COMMAND, pThis->onCommand);
+		HANDLE_MSG(hwnd, WM_NOTIFY, pThis->onNotify);
 		HANDLE_MSG(hwnd, WM_PAINT, pThis->onPaint);
 		HANDLE_MSG(hwnd, WM_DESTROY, pThis->onDestroy);
+		HANDLE_MSG(hwnd, WM_NCDESTROY, pThis->onNCDestroy);
 	default:
 		return DefWindowProc(hwnd, message, wParam, lParam);
 	}
@@ -170,28 +171,18 @@ typedef struct _ControlData {
 	LPCTSTR title;
 	SIZE size;
 	POINT pos;
-	CWinControl** ppControl;
 } ControlData;
 
 static const int marginX = 2;
 static const int marginY = 2;
-static const DWORD controlStyle = WS_TABSTOP | WS_VISIBLE | WS_CHILD;
 
-static const DWORD testListStyle = controlStyle | WS_BORDER | LVS_REPORT;
 static const SIZE testListSize = { 600, 160 };
-
-static const DWORD noteStyle = controlStyle | WS_BORDER | ES_MULTILINE | ES_AUTOHSCROLL | ES_AUTOVSCROLL | WS_VSCROLL;
 static const SIZE noteSize = { testListSize.cx, 80 };
-
-static const DWORD buttonStyle = controlStyle;
 static const SIZE buttonSize = { 80, 20 };
 
-static CTreeViewControl* pTestList = NULL;
-static CEditControl* pNote;
-
 static const ControlData controlDatas[] = {
-	{ CTreeViewControl::create, (CONTROL_ID)0, _T("All"), testListSize, { 0, 0 }, (CWinControl**)&pTestList },
-	{ CEditControl::create, (CONTROL_ID)0, _T("enter note in this edit box"), noteSize, { 0, testListSize.cy }, (CWinControl**)&pNote },
+	{ CTreeViewControl::create, CONTROL_ID_TEST_LIST, _T("All"), testListSize, { 0, 0 } },
+	{ CEditControl::create, CONTROL_ID_NOTE, _T("enter note in this edit box"), noteSize, { 0, testListSize.cy } },
 	{ CButtonControl::create, CONTROL_ID_OK, _T("OK"), buttonSize, { 360, 240 } },
 	{ CButtonControl::create, CONTROL_ID_NG, _T("NG"), buttonSize, { 440, 240 } },
 	{ CButtonControl::create, CONTROL_ID_ABORT, _T("Abort"), buttonSize, { 520, 240 } },
@@ -204,8 +195,11 @@ bool WinGtest::createControls()
 		SIZE size = { cd.size.cx - marginX, cd.size.cy - marginY };
 		POINT pos = { cd.pos.x + (marginX/2), cd.pos.y + (marginY/2) };
 		CWinControl* pControl = cd.factory(m_hInst, m_hWnd, cd.id, cd.title, size, pos);
-		if(cd.ppControl) *cd.ppControl = pControl;
+		m_controls[cd.id] = pControl;
 	}
+
+	m_pTestList = (CTreeViewControl*)m_controls[CONTROL_ID_TEST_LIST];
+	m_pNote = (CEditControl*)m_controls[CONTROL_ID_NOTE];
 
 	return true;
 }
@@ -215,8 +209,6 @@ void WinGtest::onCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 	// ‘I‘ð‚³‚ê‚½ƒƒjƒ…[‚Ì‰ðÍ:
 	switch (id)
 	{
-	case CONTROL_ID_TEST_LIST:
-	case CONTROL_ID_NOTE:
 	case CONTROL_ID_OK:
 	case CONTROL_ID_NG:
 	case CONTROL_ID_ABORT:
@@ -232,6 +224,19 @@ void WinGtest::onCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 	}
 }
 
+LRESULT WinGtest::onNotify(HWND hwnd, int /* not used */, NMHDR* nmhdr)
+{
+	LRESULT result = 0L;
+
+	if(*m_pTestList == nmhdr->hwndFrom) {
+		result = m_pTestList->onNotify(nmhdr);
+	} else if(*m_pNote == nmhdr->hwndFrom) {
+		result = m_pNote->onNotify(nmhdr);
+	}
+
+	return result;
+}
+
 void WinGtest::onPaint(HWND hwnd)
 {
 	PAINTSTRUCT ps;
@@ -244,6 +249,17 @@ void WinGtest::onPaint(HWND hwnd)
 void WinGtest::onDestroy(HWND hwnd)
 {
 	PostQuitMessage(0);
+}
+
+/**
+ * Delete this instance that conatins objects associated to the child controls
+ * after those child controls have been destroyed.
+ */
+void WinGtest::onNCDestroy(HWND hwnd)
+{
+	for(controls_t::iterator i = m_controls.begin(); i != m_controls.end(); i++) {
+		delete i->second;
+	}
 
 	delete this;
 }
