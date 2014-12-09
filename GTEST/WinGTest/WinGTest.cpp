@@ -1,285 +1,100 @@
-// WinGTest.cpp : アプリケーションのエントリ ポイントを定義します。
+
+// WinGTest.cpp : Defines the class behaviors for the application.
 //
 
 #include "stdafx.h"
 #include "WinGTest.h"
+#include "WinGTestDlg.h"
 
-#define MAX_LOADSTRING 100
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
 
-// グローバル変数:
-HINSTANCE hInst;								// 現在のインターフェイス
-TCHAR szTitle[MAX_LOADSTRING];					// タイトル バーのテキスト
-TCHAR szWindowClass[MAX_LOADSTRING];			// メイン ウィンドウ クラス名
 
-// このコード モジュールに含まれる関数の宣言を転送します:
-ATOM				MyRegisterClass(HINSTANCE hInstance);
-BOOL				InitInstance(HINSTANCE, int);
-LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
-INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
+// CWinGTestApp
 
-int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
-                     _In_opt_ HINSTANCE hPrevInstance,
-                     _In_ LPTSTR    lpCmdLine,
-                     _In_ int       nCmdShow)
+BEGIN_MESSAGE_MAP(CWinGTestApp, CWinApp)
+	ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
+END_MESSAGE_MAP()
+
+
+// CWinGTestApp construction
+
+CWinGTestApp::CWinGTestApp()
 {
-	UNREFERENCED_PARAMETER(hPrevInstance);
-	UNREFERENCED_PARAMETER(lpCmdLine);
+	// support Restart Manager
+	m_dwRestartManagerSupportFlags = AFX_RESTART_MANAGER_SUPPORT_RESTART;
 
- 	// TODO: ここにコードを挿入してください。
-	MSG msg;
-	HACCEL hAccelTable;
+	// TODO: add construction code here,
+	// Place all significant initialization in InitInstance
+}
 
-	// グローバル文字列を初期化しています。
-	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-	LoadString(hInstance, IDC_WINGTEST, szWindowClass, MAX_LOADSTRING);
-	MyRegisterClass(hInstance);
 
-	// アプリケーションの初期化を実行します:
-	if (!InitInstance (hInstance, nCmdShow))
+// The one and only CWinGTestApp object
+
+CWinGTestApp theApp;
+
+
+// CWinGTestApp initialization
+
+BOOL CWinGTestApp::InitInstance()
+{
+	// InitCommonControlsEx() is required on Windows XP if an application
+	// manifest specifies use of ComCtl32.dll version 6 or later to enable
+	// visual styles.  Otherwise, any window creation will fail.
+	INITCOMMONCONTROLSEX InitCtrls;
+	InitCtrls.dwSize = sizeof(InitCtrls);
+	// Set this to include all the common control classes you want to use
+	// in your application.
+	InitCtrls.dwICC = ICC_WIN95_CLASSES;
+	InitCommonControlsEx(&InitCtrls);
+
+	CWinApp::InitInstance();
+
+
+	// Create the shell manager, in case the dialog contains
+	// any shell tree view or shell list view controls.
+	CShellManager *pShellManager = new CShellManager;
+
+	// Activate "Windows Native" visual manager for enabling themes in MFC controls
+	CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerWindows));
+
+	// Standard initialization
+	// If you are not using these features and wish to reduce the size
+	// of your final executable, you should remove from the following
+	// the specific initialization routines you do not need
+	// Change the registry key under which our settings are stored
+	// TODO: You should modify this string to be something appropriate
+	// such as the name of your company or organization
+	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
+
+	CWinGTestDlg dlg;
+	m_pMainWnd = &dlg;
+	INT_PTR nResponse = dlg.DoModal();
+	if (nResponse == IDOK)
 	{
-		return FALSE;
+		// TODO: Place code here to handle when the dialog is
+		//  dismissed with OK
 	}
-
-	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WINGTEST));
-
-	// メイン メッセージ ループ:
-	while (GetMessage(&msg, NULL, 0, 0))
+	else if (nResponse == IDCANCEL)
 	{
-		if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
+		// TODO: Place code here to handle when the dialog is
+		//  dismissed with Cancel
 	}
-
-	return (int) msg.wParam;
-}
-
-
-
-//
-//  関数: MyRegisterClass()
-//
-//  目的: ウィンドウ クラスを登録します。
-//
-ATOM MyRegisterClass(HINSTANCE hInstance)
-{
-	WNDCLASSEX wcex;
-
-	wcex.cbSize = sizeof(WNDCLASSEX);
-
-	wcex.style			= CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc	= WndProc;
-	wcex.cbClsExtra		= 0;
-	wcex.cbWndExtra		= 0;
-	wcex.hInstance		= hInstance;
-	wcex.hIcon			= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_WINGTEST));
-	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
-	wcex.lpszMenuName	= MAKEINTRESOURCE(IDC_WINGTEST);
-	wcex.lpszClassName	= szWindowClass;
-	wcex.hIconSm		= LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
-
-	return RegisterClassEx(&wcex);
-}
-
-//
-//   関数: InitInstance(HINSTANCE, int)
-//
-//   目的: インスタンス ハンドルを保存して、メイン ウィンドウを作成します。
-//
-//   コメント:
-//
-//        この関数で、グローバル変数でインスタンス ハンドルを保存し、
-//        メイン プログラム ウィンドウを作成および表示します。
-//
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
-{
-   HWND hWnd;
-
-   hInst = hInstance; // グローバル変数にインスタンス処理を格納します。
-
-   hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, new WinGtest());
-
-   if (!hWnd)
-   {
-      return FALSE;
-   }
-
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
-
-   return TRUE;
-}
-
-//
-//  関数: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  目的:  メイン ウィンドウのメッセージを処理します。
-//
-//  WM_COMMAND	- アプリケーション メニューの処理
-//  WM_PAINT	- メイン ウィンドウの描画
-//  WM_DESTROY	- 中止メッセージを表示して戻る
-//
-//
-LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	WinGtest* pThis = WinGtest::getInstance(hwnd);
-	switch (message)
+	else if (nResponse == -1)
 	{
-		HANDLE_MSG(hwnd, WM_CREATE, WinGtest::onCreate);
-		HANDLE_MSG(hwnd, WM_COMMAND, pThis->onCommand);
-		HANDLE_MSG(hwnd, WM_NOTIFY, pThis->onNotify);
-		HANDLE_MSG(hwnd, WM_PAINT, pThis->onPaint);
-		HANDLE_MSG(hwnd, WM_DESTROY, pThis->onDestroy);
-		HANDLE_MSG(hwnd, WM_NCDESTROY, pThis->onNCDestroy);
-	default:
-		return DefWindowProc(hwnd, message, wParam, lParam);
-	}
-	return 0;
-}
-
-WinGtest* WinGtest::getInstance(HWND hwnd)
-{
-	return (WinGtest*)::GetWindowLongPtr(hwnd, GWLP_USERDATA);
-}
-
-BOOL WinGtest::onCreate(HWND hwnd, LPCREATESTRUCT lpCreateStruct)
-{
-	WinGtest* pThis = (WinGtest*)lpCreateStruct->lpCreateParams;
-	::SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)pThis);
-
-	pThis->m_hInst = lpCreateStruct->hInstance;
-	pThis->m_hWnd = hwnd;
-
-	return pThis->createControls() ? TRUE : FALSE;
-}
-
-typedef enum _CONTROL_ID {
-	CONTROL_ID_ = 200,
-	CONTROL_ID_TEST_LIST,
-	CONTROL_ID_NOTE,
-	CONTROL_ID_OK,
-	CONTROL_ID_NG,
-	CONTROL_ID_ABORT,
-} CONTROL_ID;
-
-typedef struct _ControlData {
-	CWinControl::factory_t factory;
-	CONTROL_ID id;
-	LPCTSTR title;
-	SIZE size;
-	POINT pos;
-} ControlData;
-
-static const int marginX = 2;
-static const int marginY = 2;
-
-static const SIZE testListSize = { 600, 160 };
-static const SIZE noteSize = { testListSize.cx, 80 };
-static const SIZE buttonSize = { 80, 20 };
-
-static const ControlData controlDatas[] = {
-	{ CTreeViewControl::create, CONTROL_ID_TEST_LIST, _T("All"), testListSize, { 0, 0 } },
-	{ CEditControl::create, CONTROL_ID_NOTE, _T("enter note in this edit box"), noteSize, { 0, testListSize.cy } },
-	{ CButtonControl::create, CONTROL_ID_OK, _T("OK"), buttonSize, { 360, 240 } },
-	{ CButtonControl::create, CONTROL_ID_NG, _T("NG"), buttonSize, { 440, 240 } },
-	{ CButtonControl::create, CONTROL_ID_ABORT, _T("Abort"), buttonSize, { 520, 240 } },
-};
-
-bool WinGtest::createControls()
-{
-	for(int i = 0; i < ARRAYSIZE(controlDatas); i++) {
-		const ControlData& cd = controlDatas[i];
-		SIZE size = { cd.size.cx - marginX, cd.size.cy - marginY };
-		POINT pos = { cd.pos.x + (marginX/2), cd.pos.y + (marginY/2) };
-		CWinControl* pControl = cd.factory(m_hInst, m_hWnd, cd.id, cd.title, size, pos);
-		m_controls[cd.id] = pControl;
+		TRACE(traceAppMsg, 0, "Warning: dialog creation failed, so application is terminating unexpectedly.\n");
+		TRACE(traceAppMsg, 0, "Warning: if you are using MFC controls on the dialog, you cannot #define _AFX_NO_MFC_CONTROLS_IN_DIALOGS.\n");
 	}
 
-	m_pTestList = (CTreeViewControl*)m_controls[CONTROL_ID_TEST_LIST];
-	m_pNote = (CEditControl*)m_controls[CONTROL_ID_NOTE];
-
-	return true;
-}
-
-void WinGtest::onCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
-{
-	// 選択されたメニューの解析:
-	switch (id)
+	// Delete the shell manager created above.
+	if (pShellManager != NULL)
 	{
-	case CONTROL_ID_OK:
-	case CONTROL_ID_NG:
-	case CONTROL_ID_ABORT:
-		break;
-	case IDM_ABOUT:
-		DialogBox(m_hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hwnd, About);
-		break;
-	case IDM_EXIT:
-		DestroyWindow(hwnd);
-		break;
-	default:
-		FORWARD_WM_COMMAND(hwnd, id, hwndCtl, codeNotify, DefWindowProc);
-	}
-}
-
-LRESULT WinGtest::onNotify(HWND hwnd, int /* not used */, NMHDR* nmhdr)
-{
-	LRESULT result = 0L;
-
-	if(*m_pTestList == nmhdr->hwndFrom) {
-		result = m_pTestList->onNotify(nmhdr);
-	} else if(*m_pNote == nmhdr->hwndFrom) {
-		result = m_pNote->onNotify(nmhdr);
+		delete pShellManager;
 	}
 
-	return result;
+	// Since the dialog has been closed, return FALSE so that we exit the
+	//  application, rather than start the application's message pump.
+	return FALSE;
 }
 
-void WinGtest::onPaint(HWND hwnd)
-{
-	PAINTSTRUCT ps;
-
-	HDC hdc = BeginPaint(hwnd, &ps);
-	// TODO: 描画コードをここに追加してください...
-	EndPaint(hwnd, &ps);
-}
-
-void WinGtest::onDestroy(HWND hwnd)
-{
-	PostQuitMessage(0);
-}
-
-/**
- * Delete this instance that conatins objects associated to the child controls
- * after those child controls have been destroyed.
- */
-void WinGtest::onNCDestroy(HWND hwnd)
-{
-	for(controls_t::iterator i = m_controls.begin(); i != m_controls.end(); i++) {
-		delete i->second;
-	}
-
-	delete this;
-}
-
-// バージョン情報ボックスのメッセージ ハンドラーです。
-INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	UNREFERENCED_PARAMETER(lParam);
-	switch (message)
-	{
-	case WM_INITDIALOG:
-		return (INT_PTR)TRUE;
-
-	case WM_COMMAND:
-		if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-		{
-			EndDialog(hDlg, LOWORD(wParam));
-			return (INT_PTR)TRUE;
-		}
-		break;
-	}
-	return (INT_PTR)FALSE;
-}

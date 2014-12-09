@@ -1,32 +1,32 @@
+
+// WinGTest.h : main header file for the PROJECT_NAME application
+//
+
 #pragma once
 
-#include "resource.h"
-#include "WinControl.h"
+#ifndef __AFXWIN_H__
+	#error "include 'stdafx.h' before including this file for PCH"
+#endif
 
-#include <map>
+#include "resource.h"		// main symbols
 
-class WinGtest
+
+// CWinGTestApp:
+// See WinGTest.cpp for the implementation of this class
+//
+
+class CWinGTestApp : public CWinApp
 {
 public:
-	WinGtest(void) {};
-	virtual ~WinGtest(void) {};
+	CWinGTestApp();
 
-	static WinGtest* getInstance(HWND hwnd);
-	static BOOL onCreate(HWND hwnd, LPCREATESTRUCT lpCreateStruct);
-	void onCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify);
-	LRESULT onNotify(HWND hwnd, int /* not used */, NMHDR* nmhdr);
-	void onPaint(HWND hwnd);
-	void onDestroy(HWND hwnd);
-	void onNCDestroy(HWND hwnd);
+// Overrides
+public:
+	virtual BOOL InitInstance();
 
-protected:
-	bool createControls();
+// Implementation
 
-	typedef std::map<int, CWinControl*> controls_t;
-	controls_t m_controls;
-	CTreeViewControl* m_pTestList;
-	CEditControl* m_pNote;
-
-	HINSTANCE m_hInst;
-	HWND m_hWnd;
+	DECLARE_MESSAGE_MAP()
 };
+
+extern CWinGTestApp theApp;
