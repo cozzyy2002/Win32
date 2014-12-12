@@ -56,6 +56,7 @@ CWinGTestDlg::CWinGTestDlg(CWnd* pParent /*=NULL*/)
 void CWinGTestDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_TEST_CASES, m_TestCases);
 }
 
 BEGIN_MESSAGE_MAP(CWinGTestDlg, CDialogEx)
@@ -97,6 +98,10 @@ BOOL CWinGTestDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
+	HTREEITEM root = m_TestCases.InsertItem(_T("Root"));
+	HTREEITEM item = m_TestCases.InsertItem(_T("Item1"), root);
+	m_TestCases.InsertItem(_T("SubItem11"), item);
+	m_TestCases.InsertItem(_T("Item2"), root);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
