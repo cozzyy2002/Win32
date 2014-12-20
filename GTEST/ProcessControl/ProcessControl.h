@@ -14,6 +14,7 @@ protected:
 		SendMessageEvent,
 		RecivedMessageEvent,
 		CancelEvent,
+		TerminateEvent,
 		EventMax
 	};
 
@@ -23,8 +24,8 @@ protected:
 	CProcessControl();
 	virtual ~CProcessControl();
 
-	typedef State (CProcessControl::*handleEvent_t)(const EventData& eventData);
-	static const handleEvent_t eventStateTable[StateMax][EventMax];
+	typedef State (CProcessControl::*EventHandler)(const EventData& eventData);
+	static const EventHandler eventStateTable[StateMax][EventMax];
 
 	bool start();
 	void sendMessage(LPVOID msg, size_t size);
@@ -32,8 +33,9 @@ protected:
 	void handleEventThread();
 	void receiveMessageThread();
 
+	void postEvent(EventData* pEventData);
 	State m_state;
+	DWORD m_handleEventThreadId;
 	HANDLE m_handleEventThread;		// will be returnd and closed by CDispatcher.
 	HANDLE m_receiveMessageThread;	// will be returnd and closed by CDispatcher.
-	HANDLE m_terminateEvent;
 };

@@ -16,8 +16,8 @@ public:
 
 		Returns thread handle. the handle will be closed when thread function exits.
 	*/
-	HANDLE dispatch() {
-		HANDLE thread = ::CreateThread(NULL, 0, ThreadProc, this, 0, NULL);
+	HANDLE dispatch(DWORD* pThreadId = NULL) {
+		HANDLE thread = ::CreateThread(NULL, 0, ThreadProc, this, 0, pThreadId);
 		if(thread) {
 			m_thread = thread;
 		} else {
@@ -40,8 +40,8 @@ protected:
 };
 
 template<class T>
-HANDLE dispatch(T* target, typename CDispatcher<T>::func_t func)
+HANDLE dispatch(T* target, typename CDispatcher<T>::func_t func, DWORD* pThreadId = NULL)
 {
 	CDispatcher<T>* disp = new CDispatcher<T>(target, func);
-	return disp->dispatch();
+	return disp->dispatch(pThreadId);
 }

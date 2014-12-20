@@ -3,33 +3,32 @@
 #include "Dispatcher.h"
 #include <memory>
 
-const CProcessControl::handleEvent_t CProcessControl::eventStateTable[StateMax][EventMax] = {
+const CProcessControl::EventHandler CProcessControl::eventStateTable[StateMax][EventMax] = {
 	{},
 };
 
 CProcessControl::CProcessControl()
 {
-	m_terminateEvent = NULL;
+	m_handleEventThread = NULL;
 }
 
 CProcessControl::~CProcessControl()
 {
-	if (m_terminateEvent) {
-		::SetEvent(m_terminateEvent);
-		::CloseHandle(m_terminateEvent);
+	if (m_handleEventThread) {
+		EventData* pEventData = new EventData();
+		pEventData->event = TerminateEvent;
+		postEvent(pEventData);
 	}
 }
 
 bool CProcessControl::start()
 {
 	// Already started?
-	if (m_terminateEvent) return false;
+	if (m_handleEventThread) return false;
 
-	m_handleEventThread = dispatch(this, &CProcessControl::handleEventThread);
+	m_handleEventThread = dispatch(this, &CProcessControl::handleEventThread, &m_handleEventThreadId);
 
-	m_terminateEvent = ::CreateEvent(NULL, TRUE, FALSE, NULL);
-
-	return (m_terminateEvent && m_receiveMessageThread);
+	return (m_receiveMessageThread != NULL);
 }
 
 void CProcessControl::handleEventThread()
@@ -43,9 +42,9 @@ void CProcessControl::handleEventThread()
 			// state or event is out of range
 			break;
 		}
-		handleEvent_t handleEvent = eventStateTable[m_state][eventData->event];
-		if(handleEvent == NULL) continue;
+		EventHandler eventHandler = eventStateTable[m_state][eventData->event];
+		if(eventHandler == NULL) continue;
 
-		m_state = (this->*handleEvent)(*eventData);
+		m_state = (this->*eventHandler)(*eventData);
 	}
 }
