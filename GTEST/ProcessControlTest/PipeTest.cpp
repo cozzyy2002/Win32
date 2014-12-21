@@ -18,23 +18,26 @@ public:
 	Testee slave;
 };
 
-TEST_F(PipeTest, Normal_MasterSends)
-{
-	ASSERT_NO_THROW(master.create());
-	ASSERT_NO_THROW(master.connect());
-	ASSERT_NO_THROW(slave.connect());
+class PipeNormalTest : public PipeTest {
+public:
+	void SetUp()
+	{
+		ASSERT_NO_THROW(master.create());
+		ASSERT_NO_THROW(master.connect());
+		ASSERT_NO_THROW(slave.connect());
+	};
+	void TearDown() {};
+};
 
+TEST_F(PipeNormalTest, MasterSends)
+{
 	const char* msg = "message from master";
 	ASSERT_NO_THROW(master.send(msg));
 	EXPECT_STRCASEEQ(msg, slave.receive().c_str());
 }
 
-TEST_F(PipeTest, Normal_MasterSends2)
+TEST_F(PipeNormalTest, MasterSends2)
 {
-	ASSERT_NO_THROW(master.create());
-	ASSERT_NO_THROW(master.connect());
-	ASSERT_NO_THROW(slave.connect());
-
 	char* msg = "1st message from master";
 	ASSERT_NO_THROW(master.send(msg));
 	EXPECT_STRCASEEQ(msg, slave.receive().c_str());
@@ -44,23 +47,15 @@ TEST_F(PipeTest, Normal_MasterSends2)
 	EXPECT_STRCASEEQ(msg, slave.receive().c_str());
 }
 
-TEST_F(PipeTest, Normal_SlaveSends)
+TEST_F(PipeNormalTest, SlaveSends)
 {
-	ASSERT_NO_THROW(master.create());
-	ASSERT_NO_THROW(master.connect());
-	ASSERT_NO_THROW(slave.connect());
-
 	const char* msg = "message from slave";
 	ASSERT_NO_THROW(slave.send(msg));
 	EXPECT_STRCASEEQ(msg, master.receive().c_str());
 }
 
-TEST_F(PipeTest, Normal_BothSends)
+TEST_F(PipeNormalTest, BothSends)
 {
-	ASSERT_NO_THROW(master.create());
-	ASSERT_NO_THROW(master.connect());
-	ASSERT_NO_THROW(slave.connect());
-
 	char* msg = "message from master";
 	ASSERT_NO_THROW(master.send(msg));
 	EXPECT_STRCASEEQ(msg, slave.receive().c_str());
@@ -76,15 +71,21 @@ TEST_F(PipeTest, connect_PipeNotCreated)
 }
 
 class PipeReadWriteTest
-	: public PipeTest
+	: public PipeNormalTest
 	, public WithParamInterface<size_t>	// size of data to write/read
 {
+	void SetUp()
+	{
+		PipeNormalTest::SetUp();
+	};
+	void TearDown() {
+		PipeNormalTest::TearDown();
+	};
 };
 
 TEST_P(PipeReadWriteTest, Normal)
 {
 	size_t size = GetParam();
-	LOG4CPLUS_INFO(logger, __FUNCTION__ ": size=" << size);
 
 	AutoArray<BYTE> writeBuff(size);
 	AutoArray<BYTE> readBuff(size);
@@ -92,10 +93,6 @@ TEST_P(PipeReadWriteTest, Normal)
 		writeBuff[i] = 10 - i;
 		readBuff[i] = 0;
 	}
-
-	ASSERT_NO_THROW(master.create());
-	ASSERT_NO_THROW(master.connect());
-	ASSERT_NO_THROW(slave.connect());
 
 	ASSERT_NO_THROW(master.writePipe(writeBuff, size, 0));
 	ASSERT_NO_THROW(slave.readPipe(readBuff, size, 1000));

@@ -16,9 +16,6 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProcessControl", "ProcessControl\ProcessControl.vcxproj", "{350AE727-F574-4CB1-9FC9-0F008D085380}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProcessControlTest", "ProcessControlTest\ProcessControlTest.vcxproj", "{9FD3A7A9-B63B-4ED4-8D79-D7B3B379ECBC}"
-	ProjectSection(ProjectDependencies) = postProject
-		{350AE727-F574-4CB1-9FC9-0F008D085380} = {350AE727-F574-4CB1-9FC9-0F008D085380}
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

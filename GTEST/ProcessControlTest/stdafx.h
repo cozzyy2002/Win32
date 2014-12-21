@@ -14,6 +14,5 @@
 
 // TODO: reference additional headers your program requires here
 #include <gtest/gtest.h>
-#include <tchar.h>
 #include <log4cplus/logger.h>
 #include <log4cplus/loggingmacros.h>
