@@ -6,7 +6,7 @@
 static log4cplus::Logger logger = log4cplus::Logger::getInstance(_T("ProcessControl.Pipe"));
 static const TCHAR pipeName[] = _T("\\\\.\\pipe\\pipename");
 
-CPipe::CPipe() : m_hPipe(NULL)
+CPipe::CPipe() : m_hPipe(NULL, INVALID_HANDLE_VALUE)
 {
 	m_hReadyToWriteEvent = ::CreateEvent(NULL, TRUE, TRUE, NULL);	// will be reset before pipe operation
 	m_hReadCompletedEvent = ::CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -14,17 +14,14 @@ CPipe::CPipe() : m_hPipe(NULL)
 
 CPipe::~CPipe()
 {
-	if(m_hPipe) ::CloseHandle(m_hPipe);
-	::CloseHandle(m_hReadyToWriteEvent);
-	::CloseHandle(m_hReadCompletedEvent);
 }
 
-void CPipe::create()
+void CPipe::create(DWORD defaultTimeout /*= 0*/, DWORD inBufferSize /*= 1024*/, DWORD outBufferSize /*= 1024*/)
 {
 	m_hPipe = ::CreateNamedPipe(pipeName,
 								PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
 								PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT,
-								1, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, NULL);
+								1, inBufferSize, outBufferSize, defaultTimeout, NULL);
 	if(m_hPipe == INVALID_HANDLE_VALUE) {
 		LOG4CPLUS_ERROR(logger, "CreateNamedPipe() failed. error=" << ::GetLastError());
 		throw std::exception(__FUNCTION__ ": CreateNamedPipe() failed.");
@@ -34,7 +31,7 @@ void CPipe::create()
 void CPipe::connect()
 {
 	if(m_hPipe) {
-		// wait to connect for client process.
+		// wait for client process to connect.
 		Overlapped ov(NULL);
 		BOOL result = ::ConnectNamedPipe(m_hPipe, &ov);
 		if(!result) {
@@ -72,19 +69,24 @@ void CPipe::send(const std::string& str, DWORD timeout /*= 0*/)
 DWORD CPipe::writePipe(LPCVOID data, size_t size, DWORD timeout /*= 0*/)
 {
 	LOG4CPLUS_TRACE(logger, "writing " << size << "byte");
-	DWORD numberOfBytesWritten;
-	waitEvent(m_hReadyToWriteEvent, timeout);
+	DWORD numberOfBytesWritten, total = 0;
 	Overlapped ov(m_hReadyToWriteEvent);
-	BOOL result = ::WriteFile(m_hPipe, data, size, &numberOfBytesWritten, &ov);
-	if(!result) {
-		LOG4CPLUS_ERROR(logger, "WiteFile() failed. error=" << ::GetLastError() << ",size=" << size);
-		throw std::exception(__FUNCTION__ ": WiteFile() failed.");
+	for(DWORD _size = size; 0 < _size; _size -= size) {
+		size = min(64, _size);
+		waitEvent(m_hReadyToWriteEvent, timeout);
+		BOOL result = ::WriteFile(m_hPipe, data, size, &numberOfBytesWritten, &ov);
+		if(!result) {
+			LOG4CPLUS_ERROR(logger, "WiteFile() failed. error=" << ::GetLastError() << ",size=" << size);
+			throw std::exception(__FUNCTION__ ": WiteFile() failed.");
+		}
+		data = (LPCBYTE)data + size;
+		total += size;
 	}
 	if(0 < timeout) {
 		numberOfBytesWritten = getOverlappedResult(&ov, timeout);
 	}
-	LOG4CPLUS_TRACE(logger, "wrote " << numberOfBytesWritten << "byte");
-	return numberOfBytesWritten;
+	LOG4CPLUS_TRACE(logger, "wrote " << total << "byte");
+	return total;
 }
 
 std::string CPipe::receive(DWORD timeout /*= INFINITE*/)
@@ -102,18 +104,27 @@ std::string CPipe::receive(DWORD timeout /*= INFINITE*/)
 DWORD CPipe::readPipe(LPVOID data, size_t size, DWORD timeout)
 {
 	LOG4CPLUS_TRACE(logger, "reading " << size << "byte");
-	DWORD numberOfBytesRead;
+	DWORD numberOfBytesRead, total = 0;
 	Overlapped ov(m_hReadCompletedEvent);
-	BOOL result = ::ReadFile(m_hPipe, data, size, &numberOfBytesRead, &ov);
-	if(!result) {
-		LOG4CPLUS_ERROR(logger, "ReadFile() failed. error=" << ::GetLastError());
-		throw std::exception(__FUNCTION__ ": ReadFile() failed.");
+	for(DWORD _size = size; 0 < _size; _size -= size) {
+		size = min(64, _size);
+		BOOL result = ::ReadFile(m_hPipe, data, size, &numberOfBytesRead, &ov);
+		if(!result) {
+			DWORD error = ::GetLastError();
+			if(error != ERROR_IO_PENDING) {
+				LOG4CPLUS_ERROR(logger, "ReadFile() failed. error=" << error);
+				throw std::exception(__FUNCTION__ ": ReadFile() failed.");
+			}
+		}
+		waitEvent(m_hReadCompletedEvent, timeout);
+		data = (LPBYTE)data + size;
+		total += size;
 	}
 	if(0 < timeout) {
 		numberOfBytesRead = getOverlappedResult(&ov, timeout);
 	}
-	LOG4CPLUS_TRACE(logger, "read " << numberOfBytesRead << "byte");
-	return numberOfBytesRead;
+	LOG4CPLUS_TRACE(logger, "read " << total << "byte");
+	return total;
 }
 
 DWORD CPipe::getOverlappedResult(OVERLAPPED* pov, DWORD timeout /*= INFINITE*/)
@@ -134,7 +145,7 @@ void CPipe::waitEvent(HANDLE hEvent, DWORD timeout /*= INFINITE*/)
 	LOG4CPLUS_TRACE(logger, "waiting event " << hEvent << "," << timeout << "mSec");
 	DWORD wait = ::WaitForSingleObject(hEvent, timeout);
 	if(wait != WAIT_OBJECT_0) {
-		LOG4CPLUS_ERROR(logger, "waiting event " << hEvent << " failed. error=" << ::GetLastError());
+		LOG4CPLUS_ERROR(logger, "waiting event " << hEvent << " failed. wait=" << wait << ",error=" << ::GetLastError());
 		throw std::exception(__FUNCTION__ ": waiting event failed.");
 	}
 }
