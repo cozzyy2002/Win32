@@ -123,29 +123,28 @@ TEST_P(PipeReadWriteTest, Normal)
 		readBuff[i] = 0;
 	}
 	_Data data = {readBuff, size, server, client};
-	//_beginthreadex(NULL, 0, readThread, &data, 0, NULL);
-	//_Data data = {writeBuff, size, server, client};
-	//_beginthreadex(NULL, 0, writeThread, &data, 0, NULL);
 	::Sleep(1000);
-	HANDLE hThread = ::CreateThread(NULL, 0,
+	AutoHandle hThread = ::CreateThread(NULL, 0,
 		[](LPVOID p)->DWORD
 			{
+				//if(!::SetThreadPriority(::GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL)) {
+				//	LOG4CPLUS_ERROR(logger, "SetThreadPriority() failed. error=" << ::GetLastError());
+				//}
 				_Data* pData = (_Data*)p;
 				try {
-					pData->client.readPipe(pData->pBuff, pData->size, 2000);
+					pData->client.readPipe(pData->pBuff, pData->size, 10000);
 				} catch(std::exception& e) {
-					LOG4CPLUS_ERROR(logger, __FUNCTION__ " exception: " << e.what());
+					LOG4CPLUS_ERROR(logger, "CPipe::readPipe() exception: " << e.what());
 					return 1;
 				}
 				return 0;
 			},
 		&data, 0, NULL);
-	ASSERT_NO_THROW(server.writePipe(writeBuff, size, 1500));
-	::WaitForSingleObject(hThread, INFINITE);
+	ASSERT_NO_THROW(server.writePipe(writeBuff, size, 0));
+	EXPECT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(hThread, INFINITE));
 	DWORD exitCode;
 	EXPECT_EQ(TRUE, ::GetExitCodeThread(hThread, &exitCode)) << "GetExitCode() failed. error=" << ::GetLastError();
 	EXPECT_EQ(0, exitCode);
-	::CloseHandle(hThread);
 	//ASSERT_NO_THROW(client.readPipe(readBuff, size, 1000));
 	for(size_t i = 0; i < size; i++) {
 		ASSERT_EQ(writeBuff[i], readBuff[i]) << "data position=" << i;

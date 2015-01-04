@@ -47,5 +47,8 @@
     <ClCompile Include="..\ProcessControl\MasterProcess.cpp">
       <Filter>Testee</Filter>
     </ClCompile>
+    <ClCompile Include="..\ProcessControl\Utils.cpp">
+      <Filter>Testee</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

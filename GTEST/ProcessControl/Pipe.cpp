@@ -22,7 +22,7 @@ void CPipe::create(DWORD defaultTimeout /*= 0*/, DWORD inBufferSize /*= 1024*/, 
 								PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
 								PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT,
 								1, inBufferSize, outBufferSize, defaultTimeout, NULL);
-	if(m_hPipe == INVALID_HANDLE_VALUE) {
+	if(!m_hPipe.isValid()) {
 		LOG4CPLUS_ERROR(logger, "CreateNamedPipe() failed. error=" << ::GetLastError());
 		throw std::exception(__FUNCTION__ ": CreateNamedPipe() failed.");
 	}
@@ -77,6 +77,11 @@ DWORD CPipe::writePipe(LPCVOID data, size_t size, DWORD timeout /*= 0*/)
 		BOOL result = ::WriteFile(m_hPipe, data, size, &numberOfBytesWritten, &ov);
 		if(!result) {
 			LOG4CPLUS_ERROR(logger, "WiteFile() failed. error=" << ::GetLastError() << ",size=" << size);
+			throw std::exception(__FUNCTION__ ": WiteFile() failed.");
+		}
+		result = ::FlushFileBuffers(m_hPipe);
+		if(!result) {
+			LOG4CPLUS_ERROR(logger, "FlushFileBuffers() failed. error=" << ::GetLastError() << ",pipe=" << m_hPipe);
 			throw std::exception(__FUNCTION__ ": WiteFile() failed.");
 		}
 		data = (LPCBYTE)data + size;
