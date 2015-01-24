@@ -7,22 +7,28 @@ protected:
 
 class AutoHandle : public Utils {
 public:
-	AutoHandle(HANDLE h = NULL, HANDLE hInvalid = NULL)
-		: m_handle(h), m_hInvalid(hInvalid) {
+	AutoHandle(HANDLE hHandle = NULL, HANDLE hInvalid = NULL)
+		: m_handle(hHandle), m_hInvalid(hInvalid) {
 		LOG4CPLUS_TRACE(logger, __FUNCTION__ ": handle=" << m_handle << ",invalid=" << m_hInvalid);
 	};
-	~AutoHandle() {
+	virtual ~AutoHandle() {
 		LOG4CPLUS_TRACE(logger, __FUNCTION__ ": handle=" << m_handle << ",invalid=" << m_hInvalid);
 		if(isValid()) ::CloseHandle(m_handle);
 	};
 
-	HANDLE operator=(HANDLE h) { m_handle = h; return m_handle; };
-	operator HANDLE() const { return m_handle; };
-	bool isValid() const { return m_handle != m_hInvalid; };
+	inline HANDLE operator=(HANDLE h) { m_handle = h; return m_handle; };
+	inline operator HANDLE() const { return m_handle; };
+	inline bool isValid() const { return m_handle != m_hInvalid; };
 
 protected:
 	HANDLE m_handle;
 	HANDLE m_hInvalid;
+};
+
+class AutoFileHandle : public AutoHandle {
+public:
+	AutoFileHandle(HANDLE hHandle = INVALID_HANDLE_VALUE)
+		: AutoHandle(hHandle, INVALID_HANDLE_VALUE) {};
 };
 
 template<typename T>
@@ -32,12 +38,12 @@ public:
 		p = new T[size];
 		LOG4CPLUS_TRACE(logger, __FUNCTION__ ": " << p << ",size=" << size);
 	};
-	~AutoArray() {
+	virtual ~AutoArray() {
 		LOG4CPLUS_TRACE(logger, __FUNCTION__ ": " << p);
 		delete[] p;
 	}
-	T* get() const { return p; };
-	operator T*() const { return p; };
+	inline T* get() const { return p; };
+	inline operator T*() const { return p; };
 protected:
 	T* p;
 };

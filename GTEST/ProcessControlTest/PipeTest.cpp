@@ -88,31 +88,11 @@ public:
 		BYTE* pBuff;
 		size_t size;
 		Testee& server;
-		Testee&client;
+		Testee& client;
 	};
-	static unsigned int __stdcall writeThread(void* p)
-	{
-		_Data* pData = (_Data*)p;
-		try {
-			pData->server.writePipe(pData->pBuff, pData->size, 200);
-		} catch(std::exception& e) {
-			LOG4CPLUS_ERROR(logger, __FUNCTION__ " exception: " << e.what());
-		}
-		return 0;
-	};
-	static unsigned int __stdcall readThread(void* p)
-	{
-		_Data* pData = (_Data*)p;
-		try {
-			pData->client.readPipe(pData->pBuff, pData->size, 2000);
-		} catch(std::exception& e) {
-			LOG4CPLUS_ERROR(logger, __FUNCTION__ " exception: " << e.what());
-		}
-		return 0;
-	}
 };
 
-TEST_P(PipeReadWriteTest, Normal)
+TEST_P(PipeReadWriteTest, ServerToClient)
 {
 	size_t size = GetParam();
 
@@ -123,16 +103,12 @@ TEST_P(PipeReadWriteTest, Normal)
 		readBuff[i] = 0;
 	}
 	_Data data = {readBuff, size, server, client};
-	::Sleep(1000);
 	AutoHandle hThread = ::CreateThread(NULL, 0,
 		[](LPVOID p)->DWORD
 			{
-				//if(!::SetThreadPriority(::GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL)) {
-				//	LOG4CPLUS_ERROR(logger, "SetThreadPriority() failed. error=" << ::GetLastError());
-				//}
 				_Data* pData = (_Data*)p;
 				try {
-					pData->client.readPipe(pData->pBuff, pData->size, 10000);
+					pData->client.readPipe(pData->pBuff, pData->size, 2000);
 				} catch(std::exception& e) {
 					LOG4CPLUS_ERROR(logger, "CPipe::readPipe() exception: " << e.what());
 					return 1;
@@ -145,7 +121,39 @@ TEST_P(PipeReadWriteTest, Normal)
 	DWORD exitCode;
 	EXPECT_EQ(TRUE, ::GetExitCodeThread(hThread, &exitCode)) << "GetExitCode() failed. error=" << ::GetLastError();
 	EXPECT_EQ(0, exitCode);
-	//ASSERT_NO_THROW(client.readPipe(readBuff, size, 1000));
+	for(size_t i = 0; i < size; i++) {
+		ASSERT_EQ(writeBuff[i], readBuff[i]) << "data position=" << i;
+	}
+}
+
+TEST_P(PipeReadWriteTest, ClientToServer)
+{
+	size_t size = GetParam();
+
+	AutoArray<BYTE> writeBuff(size);
+	AutoArray<BYTE> readBuff(size);
+	for(size_t i = 0; i < size; i++) {
+		writeBuff[i] = 10 - i;
+		readBuff[i] = 0;
+	}
+	_Data data = {readBuff, size, server, client};
+	AutoHandle hThread = ::CreateThread(NULL, 0,
+		[](LPVOID p)->DWORD {
+		_Data* pData = (_Data*)p;
+		try {
+			pData->server.readPipe(pData->pBuff, pData->size, 2000);
+		} catch(std::exception& e) {
+			LOG4CPLUS_ERROR(logger, "CPipe::readPipe() exception: " << e.what());
+			return 1;
+		}
+		return 0;
+	},
+		&data, 0, NULL);
+	ASSERT_NO_THROW(client.writePipe(writeBuff, size, 1500));
+	EXPECT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(hThread, INFINITE));
+	DWORD exitCode;
+	EXPECT_EQ(TRUE, ::GetExitCodeThread(hThread, &exitCode)) << "GetExitCode() failed. error=" << ::GetLastError();
+	EXPECT_EQ(0, exitCode);
 	for(size_t i = 0; i < size; i++) {
 		ASSERT_EQ(writeBuff[i], readBuff[i]) << "data position=" << i;
 	}
