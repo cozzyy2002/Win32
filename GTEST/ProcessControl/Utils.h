@@ -13,7 +13,12 @@ public:
 	};
 	virtual ~AutoHandle() {
 		LOG4CPLUS_TRACE(logger, __FUNCTION__ ": handle=" << m_handle << ",invalid=" << m_hInvalid);
-		if(isValid()) ::CloseHandle(m_handle);
+		if(isValid()) {
+			if(!::CloseHandle(m_handle)) {
+				LOG4CPLUS_FATAL(logger, "CloseHandle() failed. error=" << ::GetLastError());
+				throw std::exception("CloseHandle() failed.");
+			}
+		}
 	};
 
 	inline HANDLE operator=(HANDLE h) { m_handle = h; return m_handle; };
@@ -23,12 +28,18 @@ public:
 protected:
 	HANDLE m_handle;
 	HANDLE m_hInvalid;
+
+private:
+	AutoHandle(const AutoHandle&);
 };
 
 class AutoFileHandle : public AutoHandle {
 public:
 	AutoFileHandle(HANDLE hHandle = INVALID_HANDLE_VALUE)
 		: AutoHandle(hHandle, INVALID_HANDLE_VALUE) {};
+
+private:
+	AutoFileHandle(const AutoFileHandle&);
 };
 
 template<typename T>

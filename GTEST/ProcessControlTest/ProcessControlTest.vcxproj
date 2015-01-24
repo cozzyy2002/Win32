@@ -41,6 +41,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -52,14 +53,14 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(GTEST_ROOT)\include;$(LOG4CPLUS_ROOT)\include;$(SolutionDir)ProcessControl</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Include;$(SEXYHOOK_ROOT);$(GTEST_ROOT)\include;$(GMOCK_ROOT)\include;$(LOG4CPLUS_ROOT)\include;$(SolutionDir)ProcessControl</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(GTEST_ROOT)\msvc13\gtest\$(Configuration);$(LOG4CPLUS_ROOT)\msvc13\Win32\bin.$(Configuration)_Unicode_MTd</AdditionalLibraryDirectories>
-      <AdditionalDependencies>gtestd.lib;log4cplusUD.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(GTEST_ROOT)\msvc13\gtest\$(Configuration);$(GMOCK_ROOT)\msvc\2010\$(Configuration);$(LOG4CPLUS_ROOT)\msvc13\Win32\bin.$(Configuration)_Unicode_MTd</AdditionalLibraryDirectories>
+      <AdditionalDependencies>gtestd.lib;gmock.lib;log4cplusUD.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -71,7 +72,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(GTEST_ROOT)\include;$(LOG4CPLUS_ROOT)\include;$(SolutionDir)ProcessControl</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SEXYHOOK_ROOT);$(GTEST_ROOT)\include;$(GMOCK_ROOT)\include;$(LOG4CPLUS_ROOT)\include;$(SolutionDir)ProcessControl</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -79,8 +80,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(GTEST_ROOT)\msvc13\gtest\$(Configuration);$(LOG4CPLUS_ROOT)\msvc13\Win32\bin.$(Configuration)_Unicode_MT</AdditionalLibraryDirectories>
-      <AdditionalDependencies>gtest.lib;log4cplusU.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(GTEST_ROOT)\msvc13\gtest\$(Configuration);$(GMOCK_ROOT)\msvc\2010\$(Configuration);$(LOG4CPLUS_ROOT)\msvc13\Win32\bin.$(Configuration)_Unicode_MT</AdditionalLibraryDirectories>
+      <AdditionalDependencies>gtest.lib;gmock.lib;log4cplusU.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
@@ -90,6 +91,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MockWin32.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
@@ -104,12 +106,14 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\ProcessControl\Utils.cpp" />
+    <ClCompile Include="MockWin32.cpp" />
     <ClCompile Include="PipeTest.cpp" />
     <ClCompile Include="ProcessControlTest.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="UtilsTest.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
