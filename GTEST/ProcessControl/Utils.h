@@ -7,21 +7,19 @@ protected:
 
 class AutoHandle : public Utils {
 public:
-	AutoHandle(HANDLE hHandle = NULL, HANDLE hInvalid = NULL)
+	// explicit prevents constructor from being called by implicit type conversion
+	explicit AutoHandle(HANDLE hHandle = NULL, HANDLE hInvalid = NULL)
 		: m_handle(hHandle), m_hInvalid(hInvalid) {
 		LOG4CPLUS_TRACE(logger, __FUNCTION__ ": handle=" << m_handle << ",invalid=" << m_hInvalid);
 	};
-	virtual ~AutoHandle() {
+
+	virtual ~AutoHandle()
+	{
 		LOG4CPLUS_TRACE(logger, __FUNCTION__ ": handle=" << m_handle << ",invalid=" << m_hInvalid);
-		if(isValid()) {
-			if(!::CloseHandle(m_handle)) {
-				LOG4CPLUS_FATAL(logger, "CloseHandle() failed. error=" << ::GetLastError());
-				throw std::exception("CloseHandle() failed.");
-			}
-		}
+		if(isValid()) ::CloseHandle(m_handle);
 	};
 
-	inline HANDLE operator=(HANDLE h) { m_handle = h; return m_handle; };
+	inline HANDLE set(const HANDLE h) { m_handle = h; return m_handle; };
 	inline operator HANDLE() const { return m_handle; };
 	inline bool isValid() const { return m_handle != m_hInvalid; };
 
@@ -35,7 +33,7 @@ private:
 
 class AutoFileHandle : public AutoHandle {
 public:
-	AutoFileHandle(HANDLE hHandle = INVALID_HANDLE_VALUE)
+	explicit AutoFileHandle(HANDLE hHandle = INVALID_HANDLE_VALUE)
 		: AutoHandle(hHandle, INVALID_HANDLE_VALUE) {};
 
 private:

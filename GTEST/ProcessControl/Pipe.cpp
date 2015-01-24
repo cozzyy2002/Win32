@@ -8,8 +8,8 @@ static const TCHAR pipeName[] = _T("\\\\.\\pipe\\pipename");
 
 CPipe::CPipe()
 {
-	m_hReadyToWriteEvent = ::CreateEvent(NULL, TRUE, TRUE, NULL);	// will be reset before pipe operation
-	m_hReadCompletedEvent = ::CreateEvent(NULL, TRUE, FALSE, NULL);
+	m_hReadyToWriteEvent.set(::CreateEvent(NULL, TRUE, TRUE, NULL));	// will be reset before pipe operation
+	m_hReadCompletedEvent.set(::CreateEvent(NULL, TRUE, FALSE, NULL));
 }
 
 CPipe::~CPipe()
@@ -18,10 +18,10 @@ CPipe::~CPipe()
 
 void CPipe::create(DWORD defaultTimeout /*= 0*/, DWORD inBufferSize /*= 128*/, DWORD outBufferSize /*= 128*/)
 {
-	m_hPipe = ::CreateNamedPipe(pipeName,
+	m_hPipe.set(::CreateNamedPipe(pipeName,
 								PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
 								PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT,
-								1, inBufferSize, outBufferSize, defaultTimeout, NULL);
+								1, inBufferSize, outBufferSize, defaultTimeout, NULL));
 	if(!m_hPipe.isValid()) {
 		LOG4CPLUS_ERROR(logger, "CreateNamedPipe() failed. error=" << ::GetLastError());
 		throw std::exception(__FUNCTION__ ": CreateNamedPipe() failed.");
@@ -48,8 +48,8 @@ void CPipe::connect()
 		}
 	} else {
 		// connect to the pipe created by server process
-		m_hPipe = ::CreateFile(pipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
-								FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, NULL);
+		m_hPipe.set(::CreateFile(pipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+								FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, NULL));
 		if(!m_hPipe.isValid()) {
 			LOG4CPLUS_ERROR(logger, "CreateFile() failed. error=" << ::GetLastError());
 			throw std::exception(__FUNCTION__ ": CreateFile() failed.");

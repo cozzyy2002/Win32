@@ -12,8 +12,11 @@ public:
 	MOCK_METHOD1(CloseHandle, BOOL(_In_ HANDLE hObject));
 };
 
+// about SEXYHOOK2, see https://prezi.com/aigm45d07lrp/sexyhook2/
+
 #define INSTALL_CloseHandle_HOOK \
-	SEXYHOOK_BEGIN(BOOL, SEXYHOOK_STDCALL, &CloseHandle, (HANDLE a1)) \
+	SEXYHOOK_BEGIN(BOOL, SEXYHOOK_STDCALL, &CloseHandle, (HANDLE hObject)) \
 	{ \
-		return MockWin32::instance->CloseHandle(a1); \
+	std::cout << "CloseHandle(" << hObject << ")" << std::endl; \
+		return MockWin32::instance->CloseHandle(hObject); \
 	} SEXYHOOK_END()

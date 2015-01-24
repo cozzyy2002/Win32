@@ -2,13 +2,15 @@
 #include "Utils.h"
 #include "MockWin32.h"
 
+static log4cplus::Logger logger = log4cplus::Logger::getInstance(_T("ProcessControl.UtilsTest"));
+
 using namespace ::testing;
 
 namespace UtilsTest {
 
 	class Testee : public AutoFileHandle {
 	public:
-		Testee(HANDLE hHandle = INVALID_HANDLE_VALUE) : AutoFileHandle(hHandle) {};
+		explicit Testee(HANDLE hHandle = INVALID_HANDLE_VALUE) : AutoFileHandle(hHandle) {};
 	};
 
 	class AutoFileHandleTest : public Test {
@@ -39,7 +41,7 @@ namespace UtilsTest {
 			Testee testee;
 			ASSERT_FALSE(testee.isValid());
 			ASSERT_EQ(INVALID_HANDLE_VALUE, testee);
-			ASSERT_EQ(h, testee = h);
+			ASSERT_EQ(h, testee.set(h));
 			ASSERT_EQ(h, testee);
 			ASSERT_TRUE(testee.isValid());
 		}

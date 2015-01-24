@@ -103,7 +103,7 @@ TEST_P(PipeReadWriteTest, ServerToClient)
 		readBuff[i] = 0;
 	}
 	_Data data = {readBuff, size, server, client};
-	AutoHandle hThread = ::CreateThread(NULL, 0,
+	AutoHandle hThread(::CreateThread(NULL, 0,
 		[](LPVOID p)->DWORD
 			{
 				_Data* pData = (_Data*)p;
@@ -115,7 +115,7 @@ TEST_P(PipeReadWriteTest, ServerToClient)
 				}
 				return 0;
 			},
-		&data, 0, NULL);
+		&data, 0, NULL));
 	ASSERT_NO_THROW(server.writePipe(writeBuff, size, 0));
 	EXPECT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(hThread, INFINITE));
 	DWORD exitCode;
@@ -137,18 +137,18 @@ TEST_P(PipeReadWriteTest, ClientToServer)
 		readBuff[i] = 0;
 	}
 	_Data data = {readBuff, size, server, client};
-	AutoHandle hThread = ::CreateThread(NULL, 0,
+	AutoHandle hThread(::CreateThread(NULL, 0,
 		[](LPVOID p)->DWORD {
-		_Data* pData = (_Data*)p;
-		try {
-			pData->server.readPipe(pData->pBuff, pData->size, 2000);
-		} catch(std::exception& e) {
-			LOG4CPLUS_ERROR(logger, "CPipe::readPipe() exception: " << e.what());
-			return 1;
-		}
-		return 0;
-	},
-		&data, 0, NULL);
+			_Data* pData = (_Data*)p;
+			try {
+				pData->server.readPipe(pData->pBuff, pData->size, 2000);
+			} catch(std::exception& e) {
+				LOG4CPLUS_ERROR(logger, "CPipe::readPipe() exception: " << e.what());
+				return 1;
+			}
+			return 0;
+			},
+		&data, 0, NULL));
 	ASSERT_NO_THROW(client.writePipe(writeBuff, size, 1500));
 	EXPECT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(hThread, INFINITE));
 	DWORD exitCode;
