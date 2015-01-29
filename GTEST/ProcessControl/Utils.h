@@ -19,7 +19,7 @@ public:
 		if(isValid()) ::CloseHandle(m_handle);
 	};
 
-	inline HANDLE set(const HANDLE h) { m_handle = h; return m_handle; };
+	inline AutoHandle& set(const HANDLE h) { m_handle = h; return *this; };
 	inline operator HANDLE() const { return m_handle; };
 	inline bool isValid() const { return m_handle != m_hInvalid; };
 

@@ -17,6 +17,5 @@ public:
 #define INSTALL_CloseHandle_HOOK \
 	SEXYHOOK_BEGIN(BOOL, SEXYHOOK_STDCALL, &CloseHandle, (HANDLE hObject)) \
 	{ \
-	std::cout << "CloseHandle(" << hObject << ")" << std::endl; \
 		return MockWin32::instance->CloseHandle(hObject); \
 	} SEXYHOOK_END()
